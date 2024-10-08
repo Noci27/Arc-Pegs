@@ -54,8 +54,8 @@ class Ball{
         }
         
         //-----Slope Collision-----
+        var slopeHit = false;
         for(const slope of slopeData){
-            var slopeHit = false;
             let {Sx: sx, Sy: sy, Ex: ex, Ey: ey} = slope;
             let r = this.PoX - sx;
             let s = this.PoY - sy;
