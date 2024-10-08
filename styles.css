@@ -1,0 +1,61 @@
+body, html{
+    margin: 0;
+    height: 100%;
+    background-color: hsl(0, 0%, 50%);
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+#field{
+    background-color: hsl(0, 0%, 90%);
+    margin: 5px auto;
+    display: block;
+    /* color: hsl(286, 100%, 31%); */
+}
+
+.coordinates{
+    position: absolute;
+    left: 4rem;
+    top: 1rem;
+    /* background-color: hsla(0, 0%, 10%, 0.3); */
+}
+
+.coordinates > p{
+    display: block;
+    margin: 0;
+}
+
+p{
+    display: inline;
+    font-weight: bold;
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+}
+
+#activeText{
+    color: red;
+}
+
+.shapes{
+    margin: 5px 3em;
+}
+
+[type=radio]{
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+[type=radio] + img{
+    width: 3em;
+    height: 3em;
+    border: 3px solid black;
+    border-radius: 5px;
+    cursor: pointer;
+    background-color: hsl(0, 0%, 30%);
+    opacity: 0.5;
+}
+
+[type=radio]:checked + img {
+    outline: 2px solid #f00;
+}
