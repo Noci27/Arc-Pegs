@@ -90,7 +90,12 @@ class Ball{
                     this.Vx = 0;
                 }
                 else{
-                    this.Vx = HSpeed * Math.cos(turnAngle + currentCicleAngle);
+                    if(currentCicleAngle > Math.PI / 2 && currentCicleAngle < Math.PI || currentCicleAngle > 3 * Math.PI / 2){
+                        this.Vx = HSpeed * Math.cos(turnAngle + currentCicleAngle);
+                    }   //check if in 2. or 4. quadrant
+                    else{
+                        this.Vx = HSpeed * Math.cos(turnAngle - currentCicleAngle);
+                    }
                 }
                 // console.log("Vx after: " + this.Vx);
                 // console.log("Vy before: " + this.Vy);
@@ -98,7 +103,12 @@ class Ball{
                     this.Vy = 0;
                 }
                 else{
-                    this.Vy = HSpeed * Math.sin(turnAngle + currentCicleAngle);
+                    if(currentCicleAngle > Math.PI / 2 && currentCicleAngle < Math.PI || currentCicleAngle > 3 * Math.PI / 2){
+                        this.Vy = HSpeed * Math.cos(turnAngle + currentCicleAngle);
+                    }   //check if in 2. or 4. quadrant
+                    else{
+                        this.Vy = HSpeed * Math.cos(turnAngle - currentCicleAngle);
+                    }
                 }
                 // console.log("Vy after: " + this.Vy);
                 this.PoX += (1 - s) * this.Vx;
@@ -159,13 +169,14 @@ class Ball{
         // let slope = x => {
         //     return this.Vy / this.Vx * x + (this.PoY - this.Vy / this.Vx * this.PoX);   //function of the movement
         // } 
-        // let path = {shape: 3, Sx: fldWidth, Sy: slope(fldWidth), Ex: 0, Ey: slope(0)};
-        // ctx.strokeStyle = "green";
+        // let path = {shape: 3, Sx: fldWidth, Sy: slope(fldWidth), Ex: 0, Ey: slope(0), color: "green"};
         // draw(path);
 
         ctx.strokeStyle = "red";
-        let line = {shape: 3, Sx: this.PoX, Sy: this.PoY, Ex: this.PoX + this.Vx, Ey: this.PoY + this.Vy};
-        draw(line);
+        ctx.beginPath();
+        ctx.moveTo(this.PoX, this.PoY);
+        ctx.lineTo(this.PoX + this.Vx, this.PoY + this.Vy);
+        ctx.stroke();
 
         ctx.beginPath();
         ctx.arc(this.PoX + this.Vx, this.PoY + this.Vy, this.radus, 0 , 2 * Math.PI);
@@ -213,7 +224,7 @@ function draw(data){
     //Shapes:
     //1 = Circle -> {PosX, PosY, rad}
     //2 = Rectangle -> {TLCornerX, TLCornerY, dx, dy, color}
-    //3 = Line -> {Sx, Sy, Ex, Ey}
+    //3 = Line -> {Sx, Sy, Ex, Ey, color}
 
     let shape = data.shape;
     switch (shape) {

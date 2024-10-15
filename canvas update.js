@@ -1,4 +1,4 @@
-var tickRate = 50/3; //50/3 = 60fps
+var tickRate = 200/3; //50/3 = 60fps
 var moveIntervalID;
 document.addEventListener("keydown", (event) => {if(event.key == "Control"){speedUp()}});   //speed-up when ctrl pressed
 function speedUp(){
@@ -10,7 +10,7 @@ function speedUp(){
 document.addEventListener("keyup", speedDown);
 function speedDown(){
     clearInterval(moveIntervalID);
-    tickRate = 50/3;
+    tickRate = 200/3;
     start();
 }
 
@@ -25,7 +25,7 @@ function move(){
     d.update();
     redrawCanvas();
 
-    // d.showPath();
+    d.showPath();
     // console.log(brickCollisionPaths);
 }
 
