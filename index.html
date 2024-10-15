@@ -21,8 +21,8 @@
         <button onclick="toggleDraw()">Draw mode</button>
         <p>Draw Mode is currently</p>
         <p id="activeText">not active</p>
-        <abbr title="Returns the ball to it's original position, but does not delete placed objects"><button>Soft Reset</button></abbr>
-        <abbr title="Returns the ball to it's original position and deletes all placed objects"><button>Hard Reset</button></abbr>
+        <abbr title="Returns the ball to it's original position, but does not delete placed objects"><button onclick="softReset()">Soft Reset</button></abbr>
+        <abbr title="Returns the ball to it's original position and deletes all placed objects"><button onclick="hardReset()">Hard Reset</button></abbr>
         <div class="shapes">
             <label>
                 <input type="radio" name="shape" value="2" onclick="updateSelected(2)" disabled>
