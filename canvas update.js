@@ -29,6 +29,30 @@ function move(){
     // console.log(brickCollisionPaths);
 }
 
+function softReset(){
+    clearInterval(moveIntervalID);
+    d.PoX = 310;
+    d.PoY = 220;
+    d.Vx = 2;
+    d.Vy = 0;
+    d.update();
+    redrawCanvas();
+}
+
+function hardReset(){
+    clearInterval(moveIntervalID);
+    d.PoX = 310;
+    d.PoY = 220;
+    d.Vx = 2;
+    d.Vy = 0;
+    d.update();
+    brickData = [];
+    brickCollisionPaths = [];
+    slopeData = [];
+    // ballsData.splice(1, ballsData.length - 1);
+    redrawCanvas();
+}
+
 function redrawCanvas(){
     ctx.clearRect(0,0,fldWidth,fldHeight);  //clear whole canvas
     for(const peg of brickData){    //redraw all bricks
@@ -40,7 +64,7 @@ function redrawCanvas(){
     for(const ball of ballsData){    //redraw all balls
         draw(ball);
     }
-    if(isDrawing == true){  //redraw brick preview
+    if(isDrawing == true){  //redraw previews
         ctx.fillStyle = "hsla(0, 0%, 10%, 0.3)";
         ctx.strokeStyle = "hsla(0, 0%, 10%, 0.3)";
         switch(selectedShape){
