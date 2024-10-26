@@ -31,25 +31,35 @@ function move(){
 
 function softReset(){
     clearInterval(moveIntervalID);
+    let ball = ballsData[0];    //reset both ball and ballsdata
+    ball.PoX = 310;
+    ball.PoY = 220;
+    ball.Vx = 0;
+    ball.Vy = 0;
     d.PoX = 310;
     d.PoY = 220;
-    d.Vx = 2;
+    d.Vx = 0;
     d.Vy = 0;
-    d.update();
+
     redrawCanvas();
 }
 
 function hardReset(){
     clearInterval(moveIntervalID);
+    let ball = ballsData[0];
+    ball.PoX = 310;
+    ball.PoY = 220;
+    ball.Vx = 0;
+    ball.Vy = 0;
     d.PoX = 310;
     d.PoY = 220;
-    d.Vx = 2;
+    d.Vx = 0;
     d.Vy = 0;
-    d.update();
+    
     brickData = [];
     brickCollisionPaths = [];
     slopeData = [];
-    // ballsData.splice(1, ballsData.length - 1);
+    ballsData.splice(1, ballsData.length - 1);   //delete every but one ball
     redrawCanvas();
 }
 
