@@ -18,9 +18,9 @@ class Ball{
         this.PoY = y;
         this.radus = radius;
         this.Vy = 0;
-        this.Vx = 2;
+        this.Vx = 0;
         this.rot = 0;
-        var circle = {shape: 1, PoX: this.PoX, PoY: this.PoY, rad: this.radus, rot: this.rot};
+        var circle = {shape: 1, PoX: this.PoX, PoY: this.PoY, Vx: this.Vx, Vy: this.Vy, rad: this.radus, rot: this.rot};
 
         draw(circle);
         ballsData.push(circle);
@@ -75,51 +75,41 @@ class Ball{
             if(s <= 1 && s >= 0 && r <= 1 && r >= 0){
                 let untilHitX =  s * this.Vx;
                 let untilHitY = s * this.Vy; 
-                let HSpeed = Math.abs(this.Vx) + Math.abs(this.Vy); //radius of circle
-                let currentCicleAngle = Math.acos(this.Vx / HSpeed);
-                // console.log("CurCirAng: " + currentCicleAngle);
-                let turnAngle = 2 * calculateLineAngle(sx, sy, this.PoX, this.PoY, this.PoX + untilHitX, this.PoY + untilHitY);
-                // console.log("TurAng: " + turnAngle);
+                let HSpeed = Math.hypot(this.Vx, this.Vy); //radius of circle
+                // console.log("Hspeed before: " + HSpeed);
+                let currentCicleAngle = Math.atan(this.Vy, this.Vx);
+                console.log("Enclosed angle: " + calculateLineAngle(slope, ballsData[0]) * 180 / Math.PI);
+                let turnAngle = 2 * calculateLineAngle(slope, ballsData[0]);
                 this.PoX += untilHitX;
                 this.PoY += untilHitY;
-                // new Brick(500,300,200,100);
-                // ctx.rotate(turnAngle);
-                // new Brick(500,400,200,100);
                 // console.log("Vx before: " + this.Vx);
+                if(currentCicleAngle > Math.PI / 2 && currentCicleAngle < Math.PI || currentCicleAngle > 3 * Math.PI / 2){
+                    this.Vx = HSpeed * Math.cos(currentCicleAngle - turnAngle);
+                    this.Vy = HSpeed * Math.sin(currentCicleAngle - turnAngle);
+                }   //↑ check if in 2. or 4. quadrant
+                else{
+                    this.Vx = HSpeed * Math.cos(currentCicleAngle + turnAngle);
+                    this.Vy = HSpeed * Math.sin(currentCicleAngle + turnAngle);
+                }
+
                 if(this.Vx > -1 && this.Vx < 1){   //fix floating point imprecision
                     this.Vx = 0;
                 }
-                else{
-                    if(currentCicleAngle > Math.PI / 2 && currentCicleAngle < Math.PI || currentCicleAngle > 3 * Math.PI / 2){
-                        this.Vx = HSpeed * Math.cos(turnAngle + currentCicleAngle);
-                    }   //check if in 2. or 4. quadrant
-                    else{
-                        this.Vx = HSpeed * Math.cos(turnAngle - currentCicleAngle);
-                    }
-                }
-                // console.log("Vx after: " + this.Vx);
-                // console.log("Vy before: " + this.Vy);
                 if(this.Vy > -1 && this.Vy < 1){   //stick to ground if speed is to low
                     this.Vy = 0;
                 }
-                else{
-                    if(currentCicleAngle > Math.PI / 2 && currentCicleAngle < Math.PI || currentCicleAngle > 3 * Math.PI / 2){
-                        this.Vy = HSpeed * Math.cos(turnAngle + currentCicleAngle);
-                    }   //check if in 2. or 4. quadrant
-                    else{
-                        this.Vy = HSpeed * Math.cos(turnAngle - currentCicleAngle);
-                    }
-                }
                 // console.log("Vy after: " + this.Vy);
-                this.PoX += (1 - s) * this.Vx;
+                // console.log("Hspeed before: " + HSpeed);
+
+                this.PoX += (1 - s) * this.Vx;  //move the rest of the way
                 this.PoY += (1 - s) * this.Vy;
-                // var circle = {shape: 1, PoX: this.PoX, PoY: this.PoY, rad: this.radus, rot: this.rot};
+                // var circle = {shape: 1, PoX: this.PoX, PoY: this.PoY, Vx: this.Vx, Vy: this.Vy, rad: this.radus, rot: this.rot};
                 // draw(circle);
-                // ctx.resetTransform();
                 slopeHit = true;
-                // window.alert("WE'VE GOT A HIT BABYYYY");
             }
         }
+        console.log("\n");
+        
         if(slopeHit == false){  //only update position if no slope was hit
             this.PoY += this.Vy;  
             this.PoX += this.Vx;    
@@ -128,7 +118,7 @@ class Ball{
         //-----Spaghetti Block Collision Take 2-----
         for(const path of brickCollisionPaths){ //+ 0.5 * this.radus so corners work
             if(this.PoY > path.TLCornerY - 0.5 * this.radus && this.PoY < path.TLCornerY + path.dy + 0.5 * this.radus){ //hit vertical side
-                let rightSideVariable = 0;
+                let rightSideVariable = 0;  //used as width if hit right side
                 if(Math.sign(this.Vx) == 1){    //left or right side
                     dx = Math.abs(this.PoX - path.TLCornerX);
                 }
@@ -142,7 +132,7 @@ class Ball{
                 }
             }
             if(this.PoX < path.TLCornerX + path.dx + 0.5 * this.radus  && this.PoX > path.TLCornerX - 0.5 * this.radus){ //hit horizontal side
-                let bottomSideVariable = 0;
+                let bottomSideVariable = 0; //used as height if bottom side is hit
                 if(Math.sign(this.Vy) == 1){    //top or bottom side
                     dy = Math.abs(this.PoY - path.TLCornerY);
                 }
@@ -160,9 +150,9 @@ class Ball{
         //-----Rotation uhhhhhhhhhhh-----
         this.rot += Math.PI / 180 * this.Vx;    //angle in degrees
         
-        var circle = {shape: 1, PoX: this.PoX, PoY: this.PoY, rad: this.radus, rot: this.rot};
+        var circle = {shape: 1, PoX: this.PoX, PoY: this.PoY, Vx: this.Vx, Vy: this.Vy, rad: this.radus, rot: this.rot};
         draw(circle);   //redraws the circle
-        ballsData[0] = circle;
+        ballsData[0] = circle;  //update info in ballsData
     }
     showPath(){
         ctx.lineWidth = 2;
@@ -271,11 +261,16 @@ function draw(data){
     }
 }
 
-function calculateLineAngle(lasx, lasy, lbsx, lbsy, lix, liy){  //claculates angle between 2 intersecting line segments
-    let intersectDistanceLbX = lix - lbsx;
-    let intersectDistanceLbY = liy - lbsy;
-    let intersectDistanceLaX = lix - lasx;
-    let intersectDistanceLaY = liy - lasy;
-    let input = (intersectDistanceLaX ** 2 + intersectDistanceLaY ** 2 + intersectDistanceLbX ** 2 + intersectDistanceLbY ** 2 - (lasx - lbsx) ** 2 - (lasy - lbsy) ** 2) / (2 * Math.hypot(intersectDistanceLbX, intersectDistanceLbY) * Math.hypot(intersectDistanceLaX, intersectDistanceLaY));
+function calculateLineAngle(slopeA, slopeB){  //calculates angle between 2 intersecting line segments with dotproduct
+    let {Sx: sx, Sy: sy, Ex: ex, Ey: ey} = slopeA;
+    let xRun = ex - sx;
+    let yRise = sy - ey;
+    let {Vx: vx, Vy: vy} = slopeB;
+    let xDirection = Math.sign(vx);
+    if(xDirection == 0){    //because sign(0) = 0 ಠ╭╮ಠ
+        xDirection = 1;
+    }
+    let input = xDirection * (vx * xRun + vy * yRise) / (Math.hypot(vx, vy) * Math.hypot(xRun, yRise));
+    // console.log(Math.hypot(vx, vy) * Math.hypot(xRun, yRise));
     return Math.acos(input);
 }

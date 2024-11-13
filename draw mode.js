@@ -66,6 +66,15 @@ field.addEventListener("mouseup", () => {
             break;
             case 3: //slope
                 ctx.strokeStyle = "black";
+                if(endX < startX){  //switch points if drawn the wrong way so bounce calculations work correctly 
+                    let dummy = startX;
+                    startX = endX;
+                    endX = dummy;
+
+                    dummy = startY;
+                    startY = endY;
+                    endY = dummy;
+                }
                 new Slope(startX, startY, endX, endY);
             break;
         }

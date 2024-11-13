@@ -19,7 +19,7 @@ function start(){
     moveIntervalID = setInterval(move, tickRate);   //update the canvas
 }
 
-let d = new Ball(310, 220, 20);
+let d = new Ball(1310, 120, 20);
 function move(){
     // globTimer++;
     d.update();
@@ -89,7 +89,7 @@ function redrawCanvas(){
     }
 }
 
-// new Slope(100, 500, 500, 500);
+new Slope(50, 400, 1350, 200);
 // new Brick(500,300,200,100);
 // ctx.rotate(Math.PI /25);
 // new Brick(500,400,200,100);
