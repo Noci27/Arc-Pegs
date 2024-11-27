@@ -50,15 +50,15 @@ field.addEventListener("mouseup", () => {
     if(isDrawing == true){
         switch(selectedShape){
             case 2: //block
-                if(endX < startX){  //switch corners if drawn the wrong way so hitbox works
-                    let dummy = startX;
-                    startX = endX;
-                    endX = dummy;
+                if(endX < startX){  //switch corners if drawn the wrong way so hitbox works using XOR
+                    startX ^= endX;
+                    endX ^= startX;
+                    startX ^= endX;
                 }
                 if(endY < startY){
-                    let dummy = startY;
-                    startY = endY;
-                    endY = dummy;
+                    startY ^= endY;
+                    endY ^= startY;
+                    startY ^= endY;
                 }
                 let width = endX - startX;
                 let height = endY - startY;
@@ -66,15 +66,6 @@ field.addEventListener("mouseup", () => {
             break;
             case 3: //slope
                 ctx.strokeStyle = "black";
-                if(endX < startX){  //switch points if drawn the wrong way so bounce calculations work correctly 
-                    let dummy = startX;
-                    startX = endX;
-                    endX = dummy;
-
-                    dummy = startY;
-                    startY = endY;
-                    endY = dummy;
-                }
                 new Slope(startX, startY, endX, endY);
             break;
         }

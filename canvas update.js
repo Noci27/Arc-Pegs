@@ -1,16 +1,19 @@
-var tickRate = 200/3; //50/3 = 60fps
+var tickRate = 50/3; //50/3 = 60fps
 var moveIntervalID;
-document.addEventListener("keydown", (event) => {if(event.key == "Control"){speedUp()}});   //speed-up when ctrl pressed
+var ctrlPressed = false;
+document.addEventListener("keydown", (e) => {if(e.ctrlKey){speedUp()}});   //speed-up when ctrl pressed
 function speedUp(){
     clearInterval(moveIntervalID);
     tickRate = 1;
+    ctrlPressed = true;
     start();
 }
 
-document.addEventListener("keyup", speedDown);
+document.addEventListener("keyup", (e) => {if(ctrlPressed && !e.ctrlKey){speedDown()}}); //only speed-down if ctrl was released
 function speedDown(){
     clearInterval(moveIntervalID);
-    tickRate = 200/3;
+    tickRate = 50/3;
+    ctrlPressed = false;
     start();
 }
 
@@ -25,20 +28,20 @@ function move(){
     d.update();
     redrawCanvas();
 
-    d.showPath();
+    // d.showPath();
     // console.log(brickCollisionPaths);
 }
 
 function softReset(){
     clearInterval(moveIntervalID);
     let ball = ballsData[0];    //reset both ball and ballsdata
-    ball.PoX = 310;
-    ball.PoY = 220;
-    ball.Vx = 0;
+    ball.PoX = 1310;
+    ball.PoY = 120;
+    ball.Vx = -5;
     ball.Vy = 0;
-    d.PoX = 310;
-    d.PoY = 220;
-    d.Vx = 0;
+    d.PoX = 1310;
+    d.PoY = 120;
+    d.Vx = -5;
     d.Vy = 0;
 
     redrawCanvas();
@@ -47,13 +50,13 @@ function softReset(){
 function hardReset(){
     clearInterval(moveIntervalID);
     let ball = ballsData[0];
-    ball.PoX = 310;
-    ball.PoY = 220;
-    ball.Vx = 0;
+    ball.PoX = 1310;
+    ball.PoY = 120;
+    ball.Vx = -5;
     ball.Vy = 0;
-    d.PoX = 310;
-    d.PoY = 220;
-    d.Vx = 0;
+    d.PoX = 1310;
+    d.PoY = 120;
+    d.Vx = -5;
     d.Vy = 0;
     
     brickData = [];
@@ -89,8 +92,4 @@ function redrawCanvas(){
     }
 }
 
-new Slope(50, 400, 1350, 200);
-// new Brick(500,300,200,100);
-// ctx.rotate(Math.PI /25);
-// new Brick(500,400,200,100);
-// ctx.resetTransform();
+// new Slope(1150, 400, 1350, 200);

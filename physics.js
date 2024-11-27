@@ -3,8 +3,8 @@ const ctx = field.getContext("2d"); //gives tools for drawing
 const fldWidth = field.width;
 const fldHeight = field.height;
 // var globTimer = 0;
-const gravity = 1.02;
-const friction = 1; //no friction = 0.96 + smth small idk
+const gravity = 1.03;
+const friction = 1; //no friction = 0.6 - smth small idk
 const fieldCollission = new Path2D();
 fieldCollission.rect(0, 0, fldWidth, fldHeight);
 var brickData = new Array;  //holds info about pegs for redraw
@@ -18,7 +18,7 @@ class Ball{
         this.PoY = y;
         this.radus = radius;
         this.Vy = 0;
-        this.Vx = 0;
+        this.Vx = -5;
         this.rot = 0;
         var circle = {shape: 1, PoX: this.PoX, PoY: this.PoY, Vx: this.Vx, Vy: this.Vy, rad: this.radus, rot: this.rot};
 
@@ -36,13 +36,13 @@ class Ball{
             this.Vy += 1 - Math.log2(this.PoY) / 16;      //smoother acceleration at slow speeds
         }
 
-        let dy = this.PoY + this.Vy + this.radus * Math.sign(this.Vy);
+        let dy = this.PoY + this.Vy + this.radus * Math.sign(this.Vy);  //next intended position
         if(ctx.isPointInPath(fieldCollission, this.PoX, dy) == false){    //bounce of walls
             this.Vy *= -1;
             if(this.Vy > -1){   //stick  to ground if speed is to low
                 this.Vy = 0;
             }
-            else{
+            else{   //so speed actually converges
                 this.Vy += gravity;
             }
         }
@@ -54,14 +54,20 @@ class Ball{
         }
         
         //-----Slope Collision-----
-        var slopeHit = false;   //put outside loop because slopeData can be empty
+        let slopeHit = false;   //put outside loop because slopeData can be empty
         for(const slope of slopeData){
             let {Sx: sx, Sy: sy, Ex: ex, Ey: ey} = slope;
-            let r = this.PoX - sx;
-            let s = this.PoY - sy;
             let exsx = ex - sx;
-            let sbxebx = -this.Vx;
+            if(exsx == 0){  //prevents division by 0; makes vertical slopes work
+                exsx = 0.1;
+            }
             let eysy = ey - sy;
+            let unitScalar = Math.hypot(exsx, eysy);    //creates a normal vector of length 1
+            let normaldx = -eysy / unitScalar;
+            let normaldy = exsx / unitScalar;
+            let r = this.PoX + Math.sign(exsx) * Math.sign(this.Vy) * this.radus * normaldx - sx;  //adding radius of ball 
+            let s = this.PoY + Math.sign(exsx) * Math.sign(this.Vy) * this.radus * normaldy - sy;  //Math.sign(...) adds to the correct side
+            let sbxebx = -this.Vx;
             let sbyeby = -this.Vy;
     
             r /= exsx;
@@ -75,40 +81,18 @@ class Ball{
             if(s <= 1 && s >= 0 && r <= 1 && r >= 0){
                 let untilHitX =  s * this.Vx;
                 let untilHitY = s * this.Vy; 
-                let HSpeed = Math.hypot(this.Vx, this.Vy); //radius of circle
-                // console.log("Hspeed before: " + HSpeed);
-                let currentCicleAngle = Math.atan(this.Vy, this.Vx);
-                console.log("Enclosed angle: " + calculateLineAngle(slope, ballsData[0]) * 180 / Math.PI);
-                let turnAngle = 2 * calculateLineAngle(slope, ballsData[0]);
-                this.PoX += untilHitX;
+                this.PoX += untilHitX;  //go to position of impact
                 this.PoY += untilHitY;
-                // console.log("Vx before: " + this.Vx);
-                if(currentCicleAngle > Math.PI / 2 && currentCicleAngle < Math.PI || currentCicleAngle > 3 * Math.PI / 2){
-                    this.Vx = HSpeed * Math.cos(currentCicleAngle - turnAngle);
-                    this.Vy = HSpeed * Math.sin(currentCicleAngle - turnAngle);
-                }   //↑ check if in 2. or 4. quadrant
-                else{
-                    this.Vx = HSpeed * Math.cos(currentCicleAngle + turnAngle);
-                    this.Vy = HSpeed * Math.sin(currentCicleAngle + turnAngle);
-                }
-
-                if(this.Vx > -1 && this.Vx < 1){   //fix floating point imprecision
-                    this.Vx = 0;
-                }
-                if(this.Vy > -1 && this.Vy < 1){   //stick to ground if speed is to low
-                    this.Vy = 0;
-                }
-                // console.log("Vy after: " + this.Vy);
-                // console.log("Hspeed before: " + HSpeed);
-
+                let normalScalar = this.Vx * normaldx + this.Vy * normaldy;
+                let translationX = normalScalar * normaldx; //vector perpendicular to slope
+                let translationY = normalScalar * normaldy;
+                this.Vx -= 2 * translationX;    //successfully mirror speed around normal vector
+                this.Vy -= 2 * translationY;
                 this.PoX += (1 - s) * this.Vx;  //move the rest of the way
                 this.PoY += (1 - s) * this.Vy;
-                // var circle = {shape: 1, PoX: this.PoX, PoY: this.PoY, Vx: this.Vx, Vy: this.Vy, rad: this.radus, rot: this.rot};
-                // draw(circle);
                 slopeHit = true;
             }
         }
-        console.log("\n");
         
         if(slopeHit == false){  //only update position if no slope was hit
             this.PoY += this.Vy;  
@@ -159,7 +143,7 @@ class Ball{
         // let slope = x => {
         //     return this.Vy / this.Vx * x + (this.PoY - this.Vy / this.Vx * this.PoX);   //function of the movement
         // } 
-        // let path = {shape: 3, Sx: fldWidth, Sy: slope(fldWidth), Ex: 0, Ey: slope(0), color: "green"};
+        // let path = {shape: 3, Sx: this.PoX, Sy: this.PoY, Ex: this.PoX + Math.sign(this.Vx) * 500, Ey: slope(this.PoX + Math.sign(this.Vx) * 500), color: "green"};
         // draw(path);
 
         ctx.strokeStyle = "red";
@@ -227,8 +211,8 @@ function draw(data){
             ctx.rotate(rot);    
             ctx.translate(-x, -y);
             var grad = ctx.createRadialGradient(x - r/2, y - r/2, 1, x, y, r); 
-            grad.addColorStop(0, "lightblue");
-            grad.addColorStop(1, "rgb(58, 70, 183)");
+            grad.addColorStop(0, "lightgreen");
+            grad.addColorStop(1, "rgb(0, 185, 9)");
             ctx.fillStyle = grad;   //makes the gradient
             
             ctx.fill(); //actually draws the circle
@@ -259,18 +243,4 @@ function draw(data){
             ctx.stroke();
         break;
     }
-}
-
-function calculateLineAngle(slopeA, slopeB){  //calculates angle between 2 intersecting line segments with dotproduct
-    let {Sx: sx, Sy: sy, Ex: ex, Ey: ey} = slopeA;
-    let xRun = ex - sx;
-    let yRise = sy - ey;
-    let {Vx: vx, Vy: vy} = slopeB;
-    let xDirection = Math.sign(vx);
-    if(xDirection == 0){    //because sign(0) = 0 ಠ╭╮ಠ
-        xDirection = 1;
-    }
-    let input = xDirection * (vx * xRun + vy * yRise) / (Math.hypot(vx, vy) * Math.hypot(xRun, yRise));
-    // console.log(Math.hypot(vx, vy) * Math.hypot(xRun, yRise));
-    return Math.acos(input);
 }
