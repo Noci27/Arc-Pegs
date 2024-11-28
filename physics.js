@@ -65,8 +65,9 @@ class Ball{
             let unitScalar = Math.hypot(exsx, eysy);    //creates a normal vector of length 1
             let normaldx = -eysy / unitScalar;
             let normaldy = exsx / unitScalar;
-            let r = this.PoX + Math.sign(exsx) * Math.sign(this.Vy) * this.radus * normaldx - sx;  //adding radius of ball 
-            let s = this.PoY + Math.sign(exsx) * Math.sign(this.Vy) * this.radus * normaldy - sy;  //Math.sign(...) adds to the correct side
+            let normalScalar = this.Vx * normaldx + this.Vy * normaldy;
+            let r = this.PoX + Math.sign(normalScalar) * this.radus * normaldx - sx;  //adding radius of ball 
+            let s = this.PoY + Math.sign(normalScalar) * this.radus * normaldy - sy;  //Math.sign(...) adds to the correct side
             let sbxebx = -this.Vx;
             let sbyeby = -this.Vy;
     
@@ -83,7 +84,6 @@ class Ball{
                 let untilHitY = s * this.Vy; 
                 this.PoX += untilHitX;  //go to position of impact
                 this.PoY += untilHitY;
-                let normalScalar = this.Vx * normaldx + this.Vy * normaldy;
                 let translationX = normalScalar * normaldx; //vector perpendicular to slope
                 let translationY = normalScalar * normaldy;
                 this.Vx -= 2 * translationX;    //successfully mirror speed around normal vector
