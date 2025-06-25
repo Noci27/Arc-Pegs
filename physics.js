@@ -2,9 +2,8 @@ const field = document.getElementById("field");
 const ctx = field.getContext("2d"); //gives tools for drawing
 const fldWidth = field.width;
 const fldHeight = field.height;
-// var globTimer = 0;
-const gravity = 1.03;
-const friction = 1; //no friction = 0.6 - smth small idk
+const gravity = 1.05;
+const friction = 1.2;
 const fieldCollission = new Path2D();
 fieldCollission.rect(0, 0, fldWidth, fldHeight);
 var brickData = new Array;  //holds info about pegs for redraw
@@ -17,8 +16,9 @@ class Ball{
         this.PoX = x;
         this.PoY = y;
         this.radus = radius;
+        this.Vx = 5;
         this.Vy = 0;
-        this.Vx = -5;
+        this.HSpeed = Math.hypot(this.Vx, this.Vy);
         this.rot = 0;
         var circle = {shape: 1, PoX: this.PoX, PoY: this.PoY, Vx: this.Vx, Vy: this.Vy, rad: this.radus, rot: this.rot};
 
@@ -37,9 +37,9 @@ class Ball{
         }
 
         let dy = this.PoY + this.Vy + this.radus * Math.sign(this.Vy);  //next intended position
-        if(ctx.isPointInPath(fieldCollission, this.PoX, dy) == false){    //bounce of walls
+        if(!ctx.isPointInPath(fieldCollission, this.PoX, dy)){    //bounce of level boundaries
             this.Vy *= -1;
-            if(this.Vy > -1){   //stick  to ground if speed is to low
+            if(this.Vy > -1 && Math.sign(this.Vy) == -1){   //stick to ground if speed is to low
                 this.Vy = 0;
             }
             else{   //so speed actually converges
@@ -49,48 +49,85 @@ class Ball{
         
         //-----Horizontal Movement-----
         let dx = this.PoX + this.Vx + this.radus * Math.sign(this.Vx);
-        if(ctx.isPointInPath(fieldCollission, dx, this.PoY) == false){    //bounce of walls
+        if(!ctx.isPointInPath(fieldCollission, dx, this.PoY)){    //bounce of level boundaries
             this.Vx *= -1;
         }
         
         //-----Slope Collision-----
         let slopeHit = false;   //put outside loop because slopeData can be empty
+        let [movingNormalX, movingNormalY] = normal(this.Vx, this.Vy);  //normal to speed vector
         for(const slope of slopeData){
             let {Sx: sx, Sy: sy, Ex: ex, Ey: ey} = slope;
-            let exsx = ex - sx;
-            if(exsx == 0){  //prevents division by 0; makes vertical slopes work
-                exsx = 0.1;
+            //search for overlap with SAT
+            for(let k = 0; k < 2; k++){ //check both sides of slope
+                let axisCheckX, axisCheckY;
+                let moveBoxMin = Number.MAX_SAFE_INTEGER;   //bounds of 1D projection
+                let moveBoxMax = Number.MIN_SAFE_INTEGER;
+                let slopeProjectionMin, slopeProjectionMax;
+                if(k == 0){ //check normal first because it's less likely for overlap
+                    [axisCheckX, axisCheckY] = normal((ex - sx), (ey - sy));  //destructering output
+                    slopeProjectionMax = dotP(axisCheckX, axisCheckY, sx, sy);
+                    slopeProjectionMin = slopeProjectionMax;   //because slope ⊥ normal (only applies in first case)
+                }
+                else{
+                    axisCheckX = ex - sx;
+                    axisCheckY = ey - sy;
+                    slopeProjectionMax = dotP(axisCheckX, axisCheckY, sx, sy);
+                    slopeProjectionMin = dotP(axisCheckX, axisCheckY, ex, ey);
+                    if(slopeProjectionMax < slopeProjectionMin){    //switch variables if in wrong order
+                        slopeProjectionMin ^= slopeProjectionMax;
+                        slopeProjectionMax ^= slopeProjectionMin;
+                        slopeProjectionMin ^= slopeProjectionMax;
+                    }
+                }
+                for(let i = 0; i < 2; i++){ //calculate 1D projection of ball movebox™
+                    for(let j = -1; j < 2; j += 2){
+                        let cornerX = this.PoX + i * (this.HSpeed * movingNormalY) + j * (this.radus * movingNormalX);
+                        let cornerY = this.PoY + i * (this.HSpeed * movingNormalX * -1) + j * (this.radus * movingNormalY);   //get normalized speed vector back
+                        let cornerProjection = dotP(axisCheckX, axisCheckY, cornerX, cornerY);
+                        if(cornerProjection < moveBoxMin){
+                            moveBoxMin = cornerProjection;
+                        }
+                        if(cornerProjection > moveBoxMax){
+                            moveBoxMax = cornerProjection;
+                        }
+                    }
+                }
+                if(!((slopeProjectionMin > moveBoxMin && slopeProjectionMin < moveBoxMax)||(moveBoxMin > slopeProjectionMin && moveBoxMin < slopeProjectionMax))){
+                    break;  //stop if gap is found
+                }
+                if(k == 1){
+                    let [normalX, normalY] = normal((ex-sx), (ey-sy));
+                    let scalar = 2 * dotP(this.Vx, this.Vy, normalX, normalY);  //mirror moving vector
+                    //using Gauss elimination to find point of impact
+                    let aa = this.Vx;
+                    let ab = -(ex-sx);
+                    if(ab == 0){    //prevent division by 0
+                        ab = 0.01;
+                    }
+                    let ba = this.Vy;
+                    let bb = -(ey-sy);
+                    let t = sx - (this.PoX + this.radus * Math.sign(scalar) * normalX); //adding radius of ball
+                    let r = sy - (this.PoY + this.radus * Math.sign(scalar) * normalY);
+
+                    aa /= ab;
+                    t /= ab;
+                    ba -= bb * aa;
+                    r -= bb * t;
+                    r /= ba;
+
+                    this.PoX += r * this.Vx;    //go to point of impact
+                    this.PoY += r * this.Vy;
+
+                    this.Vx -= scalar * normalX;    //translate vector correct way
+                    this.Vy -= scalar * normalY
+                    this.PoX += (1 - r) * this.Vx;   //move rest of way
+                    this.PoY += (1 - r) * this.Vy;
+                    slopeHit = true;
+                }
             }
-            let eysy = ey - sy;
-            let unitScalar = Math.hypot(exsx, eysy);    //creates a normal vector of length 1
-            let normaldx = -eysy / unitScalar;
-            let normaldy = exsx / unitScalar;
-            let normalScalar = this.Vx * normaldx + this.Vy * normaldy;
-            let r = this.PoX + Math.sign(normalScalar) * this.radus * normaldx - sx;  //adding radius of ball 
-            let s = this.PoY + Math.sign(normalScalar) * this.radus * normaldy - sy;  //Math.sign(...) adds to the correct side
-            let sbxebx = -this.Vx;
-            let sbyeby = -this.Vy;
-    
-            r /= exsx;
-            sbxebx /= exsx;
-            s -= eysy * r;
-            sbyeby -= eysy * sbxebx;
-            s /= sbyeby;
-            r -= sbxebx * s;
-            //for explanation for ↑ that, consult math.png
-    
-            if(s <= 1 && s >= 0 && r <= 1 && r >= 0){
-                let untilHitX =  s * this.Vx;
-                let untilHitY = s * this.Vy; 
-                this.PoX += untilHitX;  //go to position of impact
-                this.PoY += untilHitY;
-                let translationX = normalScalar * normaldx; //vector perpendicular to slope
-                let translationY = normalScalar * normaldy;
-                this.Vx -= 2 * translationX;    //successfully mirror speed around normal vector
-                this.Vy -= 2 * translationY;
-                this.PoX += (1 - s) * this.Vx;  //move the rest of the way
-                this.PoY += (1 - s) * this.Vy;
-                slopeHit = true;
+            if(slopeHit){
+                break;  //since no movement is left after bounce/ may result in tunneling
             }
         }
         
@@ -125,8 +162,13 @@ class Ball{
                     bottomSideVariable = path.dy;
                 }
                 if(dy < this.radus){
-                    this.PoY = path.TLCornerY + bottomSideVariable - this.radus * Math.sign(this.Vy);   //set position outiside of block 
-                    this.Vy *= -1;
+                    this.PoY = path.TLCornerY + bottomSideVariable - this.radus * Math.sign(this.Vy);   //set position outiside of block
+                    if(bottomSideVariable == 0 && this.Vy < 1){    //stick if hit top side and speed is low enough
+                        this.Vy = 0;
+                    }
+                    else{
+                        this.Vy *= -1;
+                    }
                 }
             }
         }
@@ -134,6 +176,7 @@ class Ball{
         //-----Rotation uhhhhhhhhhhh-----
         this.rot += Math.PI / 180 * this.Vx;    //angle in degrees
         
+        this.HSpeed = Math.hypot(this.Vx, this.Vy); //update HSpeed
         var circle = {shape: 1, PoX: this.PoX, PoY: this.PoY, Vx: this.Vx, Vy: this.Vy, rad: this.radus, rot: this.rot};
         draw(circle);   //redraws the circle
         ballsData[0] = circle;  //update info in ballsData
@@ -155,9 +198,17 @@ class Ball{
         ctx.beginPath();
         ctx.arc(this.PoX + this.Vx, this.PoY + this.Vy, this.radus, 0 , 2 * Math.PI);
         ctx.stroke();
+
+        ctx.strokeStyle = "orange";
+        let cornerX = this.PoX - this.radus;
+        ctx.translate(this.PoX, this.PoY);
+        ctx.rotate(Math.acos(this.Vy / this.HSpeed) * (this.Vx < 0 ? 1:-1));
+        ctx.translate(-this.PoX, -this.PoY);
+        ctx.strokeRect(cornerX, this.PoY, 2 * this.radus * ((cornerX > this.PoX) ? -1:1), this.HSpeed);
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
     }
     getData(){
-        let data = {X: this.PoX, Y: this.PoY, VSpeed: this.Vy, HSpeed: this.Vx}
+        let data = {X: this.PoX, Y: this.PoY, VSpeed: this.Vy, XSpeed:this.Vx, HSpeed: this.HSpeed};
         return data;
     }
 }
@@ -187,9 +238,11 @@ class Slope{
         this.Sy = Sy;
         this.Ex = Ex;
         this.Ey = Ey;
-        var line = {shape: 3, Sx: this.Sx, Sy: this.Sy, Ex: this.Ex, Ey: this.Ey, color: "black"};
-        draw(line);
-        slopeData.push(line);
+        if(!(this.Ex - this.Sx == 0 && this.Ey - this.Sy == 0)){   //ignore if slope's vector is 0 (no slope to draw)
+            var line = {shape: 3, Sx: this.Sx, Sy: this.Sy, Ex: this.Ex, Ey: this.Ey, color: "black"};
+            draw(line);
+            slopeData.push(line);
+        }
     }
 }
 

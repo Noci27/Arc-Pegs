@@ -1,13 +1,48 @@
 var tickRate = 50/3; //50/3 = 60fps
+// var globTimer = 0;
+let d = new Ball(310, 120, 20);
+const ballInitial = d.getData();
 var moveIntervalID;
 var ctrlPressed = false;
-document.addEventListener("keydown", (e) => {if(e.ctrlKey){speedUp()}});   //speed-up when ctrl pressed
-function speedUp(){
-    clearInterval(moveIntervalID);
-    tickRate = 1;
-    ctrlPressed = true;
-    start();
-}
+const hotkeyMenu = document.getElementById("hotkeyMenu");
+
+//-----Hotkeys-----
+//maybe add an overly complicated secret hotkey later
+document.addEventListener("keydown", (e) => {
+    switch (e.key){
+        case "s":   //starts simulation
+        case "S":
+            start();    
+        break;
+        
+        case "p":   //pauses simulation
+        case "P":
+            pause();
+        break;
+
+        case "d":
+        case "D":
+            toggleDraw();
+        break;
+
+        case "r":
+            softReset();
+        break;
+
+        case "R":
+            hardReset();
+        break;
+
+        case "Control": //speed up simulation
+            clearInterval(moveIntervalID);
+            tickRate = 1;
+            ctrlPressed = true;
+            start();
+        break;
+        default:
+            // console.log(e.key);
+    }
+});
 
 document.addEventListener("keyup", (e) => {if(ctrlPressed && !e.ctrlKey){speedDown()}}); //only speed-down if ctrl was released
 function speedDown(){
@@ -17,32 +52,39 @@ function speedDown(){
     start();
 }
 
+//-----Most important functions that the game wouldn't work without-----
+function move(){
+    // globTimer++;
+    d.update();
+    redrawCanvas();
+    // d.showPath();
+    // console.log(d.getData());
+}
+
+function openHotkeyMenu(){
+    hotkeyMenu.showModal();
+}
+
 function start(){
     clearInterval(moveIntervalID);  //so it doesn't speed up when pressed again
     moveIntervalID = setInterval(move, tickRate);   //update the canvas
 }
 
-let d = new Ball(1310, 120, 20);
-function move(){
-    // globTimer++;
-    d.update();
-    redrawCanvas();
-
-    // d.showPath();
-    // console.log(brickCollisionPaths);
+function pause(){
+    clearInterval(moveIntervalID);
 }
 
 function softReset(){
     clearInterval(moveIntervalID);
     let ball = ballsData[0];    //reset both ball and ballsdata
-    ball.PoX = 1310;
-    ball.PoY = 120;
-    ball.Vx = -5;
-    ball.Vy = 0;
-    d.PoX = 1310;
-    d.PoY = 120;
-    d.Vx = -5;
-    d.Vy = 0;
+    ball.PoX = ballInitial.X;
+    ball.PoY = ballInitial.Y;
+    ball.Vx = ballInitial.XSpeed;
+    ball.Vy = ballInitial.VSpeed;
+    d.PoX = ballInitial.X;
+    d.PoY = ballInitial.Y;
+    d.Vx = ballInitial.XSpeed;
+    d.Vy = ballInitial.VSpeed;
 
     redrawCanvas();
 }
@@ -50,14 +92,14 @@ function softReset(){
 function hardReset(){
     clearInterval(moveIntervalID);
     let ball = ballsData[0];
-    ball.PoX = 1310;
-    ball.PoY = 120;
-    ball.Vx = -5;
-    ball.Vy = 0;
-    d.PoX = 1310;
-    d.PoY = 120;
-    d.Vx = -5;
-    d.Vy = 0;
+    ball.PoX = ballInitial.X;
+    ball.PoY = ballInitial.Y;
+    ball.Vx = ballInitial.XSpeed;
+    ball.Vy = ballInitial.VSpeed;
+    d.PoX = ballInitial.X;
+    d.PoY = ballInitial.Y;
+    d.Vx = ballInitial.XSpeed;
+    d.Vy = ballInitial.VSpeed;
     
     brickData = [];
     brickCollisionPaths = [];
@@ -92,4 +134,4 @@ function redrawCanvas(){
     }
 }
 
-// new Slope(1150, 400, 1350, 200);
+// new Slope(0, 500, fldWidth, 500); 

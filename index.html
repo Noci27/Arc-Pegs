@@ -8,6 +8,7 @@
     <script src="physics.js" defer></script>
     <script src="canvas update.js" defer></script>
     <script src="draw mode.js" defer></script>
+    <script src="helper functions.js" defer></script>
     <title>Ball</title>
 </head>
 <body>
@@ -17,22 +18,39 @@
     </div>
     <canvas id="field" width="1400" height="600"></canvas>
     <div class="controls">
-        <button onclick="start()">Start</button>
-        <button onclick="toggleDraw()">Draw mode</button>
-        <p>Draw Mode is currently</p>
-        <p id="activeText">not active</p>
-        <abbr title="Returns the ball to it's original position, but does not delete placed objects"><button onclick="softReset()">Soft Reset</button></abbr>
-        <abbr title="Returns the ball to it's original position and deletes all placed objects"><button onclick="hardReset()">Hard Reset</button></abbr>
-        <div class="shapes">
-            <label>
-                <input type="radio" name="shape" value="2" onclick="updateSelected(2)" disabled>
-                <img src="Assets/square2.png" alt="Square Peg" draggable="false">
-            </label>
-            <label>
-                <input type="radio" name="shape" value="3" onclick="updateSelected(3)" disabled>
-                <img src="Assets/line.png" alt="Line" draggable="false">
-            </label>
+        <div class="simulation-controls">
+            <abbr title="Returns the ball to it's original position, but does not delete placed objects"><button onclick="softReset()">🔁Soft Reset</button></abbr>
+            <abbr title="Returns the ball to it's original position and deletes all placed objects"><button onclick="hardReset()">💣Hard Reset</button></abbr>
+            <button onclick="start()">Start</button>
+            <button onclick="pause()">Pause</button>
+        </div>
+        <div class="draw-mode-controls">
+            <button onclick="toggleDraw()">Draw mode</button>
+            <p>Draw Mode is currently</p>
+            <p id="activeText">not active</p>
+            <div class="shapes">
+                <label>
+                    <input type="radio" name="shape" value="2" onclick="updateSelected(2)" disabled>
+                    <img src="Assets/square2.png" alt="Square Peg" draggable="false">
+                </label>
+                <label>
+                    <input type="radio" name="shape" value="3" onclick="updateSelected(3)" disabled>
+                    <img src="Assets/line.png" alt="Line" draggable="false">
+                </label>
+            </div>
         </div>
     </div>
+    <button class="hotkey-info-button" onclick="openHotkeyMenu()">i</button>
+    <dialog id="hotkeyMenu" closedBy="any">
+        <h2>Hotkeys</h2>
+        <ul>
+            <li><strong>S</strong> - Start/Resume</li>
+            <li><strong>P</strong> - Pause</li>
+            <li><strong>D</strong> - Enable/Disable Draw Mode</li>
+            <li><strong>Ctrl</strong> - Speed up</li>
+            <li><strong>R</strong> - Soft Reset</li>
+            <li><strong>Shift + R</strong> - Hard Reset</li>
+        </ul>
+    </dialog>
 </body>
 </html>
