@@ -50,15 +50,15 @@ field.addEventListener("mouseup", () => {
     if(isDrawing == true){
         switch(selectedShape){
             case 2: //block
-                if(endX < startX){  //switch corners if drawn the wrong way so hitbox works
-                    let dummy = startX;
-                    startX = endX;
-                    endX = dummy;
+                if(endX < startX){  //switch corners if drawn the wrong way so hitbox works using XOR
+                    startX ^= endX;
+                    endX ^= startX;
+                    startX ^= endX;
                 }
                 if(endY < startY){
-                    let dummy = startY;
-                    startY = endY;
-                    endY = dummy;
+                    startY ^= endY;
+                    endY ^= startY;
+                    startY ^= endY;
                 }
                 let width = endX - startX;
                 let height = endY - startY;
