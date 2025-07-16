@@ -55,83 +55,44 @@ class Ball{
         
         //-----Slope Collision-----
         let slopeHit = false;   //put outside loop because slopeData can be empty
-        let [movingNormalX, movingNormalY] = normal(this.Vx, this.Vy);  //normal to speed vector
         for(const slope of slopeData){
             let {Sx: sx, Sy: sy, Ex: ex, Ey: ey} = slope;
-            //search for overlap with SAT
-            for(let k = 0; k < 2; k++){ //check both sides of slope
-                let axisCheckX, axisCheckY;
-                let moveBoxMin = Number.MAX_SAFE_INTEGER;   //bounds of 1D projection
-                let moveBoxMax = Number.MIN_SAFE_INTEGER;
-                let slopeProjectionMin, slopeProjectionMax;
-                if(k == 0){ //check normal first because it's less likely for overlap
-                    [axisCheckX, axisCheckY] = normal((ex - sx), (ey - sy));  //destructering output
-                    slopeProjectionMax = dotP(axisCheckX, axisCheckY, sx, sy);
-                    slopeProjectionMin = slopeProjectionMax;   //because slope ⊥ normal (only applies in first case)
+            let slopage = [[sx, sy], [ex, ey]];
+            if(checkOverlapCircle([this.PoX + this.Vx, this.PoY + this.Vy, this.radus], slopage)){
+                let [normalX, normalY] = normal((ex-sx), (ey-sy));
+                let scalar = 2 * dotP(this.Vx, this.Vy, normalX, normalY);  //mirror moving vector
+                //using Gauss elimination to find point of impact
+                let aa = this.Vx;
+                let ab = -(ex-sx);
+                if(ab == 0){    //prevent division by 0
+                    ab = 0.01;
                 }
-                else{
-                    axisCheckX = ex - sx;
-                    axisCheckY = ey - sy;
-                    slopeProjectionMax = dotP(axisCheckX, axisCheckY, sx, sy);
-                    slopeProjectionMin = dotP(axisCheckX, axisCheckY, ex, ey);
-                    if(slopeProjectionMax < slopeProjectionMin){    //switch variables if in wrong order
-                        slopeProjectionMin ^= slopeProjectionMax;
-                        slopeProjectionMax ^= slopeProjectionMin;
-                        slopeProjectionMin ^= slopeProjectionMax;
-                    }
-                }
-                for(let i = 0; i < 2; i++){ //calculate 1D projection of ball movebox™
-                    for(let j = -1; j < 2; j += 2){
-                        let cornerX = this.PoX + i * (this.HSpeed * movingNormalY) + j * (this.radus * movingNormalX);
-                        let cornerY = this.PoY + i * (this.HSpeed * movingNormalX * -1) + j * (this.radus * movingNormalY);   //get normalized speed vector back
-                        let cornerProjection = dotP(axisCheckX, axisCheckY, cornerX, cornerY);
-                        if(cornerProjection < moveBoxMin){
-                            moveBoxMin = cornerProjection;
-                        }
-                        if(cornerProjection > moveBoxMax){
-                            moveBoxMax = cornerProjection;
-                        }
-                    }
-                }
-                if(!((slopeProjectionMin > moveBoxMin && slopeProjectionMin < moveBoxMax)||(moveBoxMin > slopeProjectionMin && moveBoxMin < slopeProjectionMax))){
-                    break;  //stop if gap is found
-                }
-                if(k == 1){
-                    let [normalX, normalY] = normal((ex-sx), (ey-sy));
-                    let scalar = 2 * dotP(this.Vx, this.Vy, normalX, normalY);  //mirror moving vector
-                    //using Gauss elimination to find point of impact
-                    let aa = this.Vx;
-                    let ab = -(ex-sx);
-                    if(ab == 0){    //prevent division by 0
-                        ab = 0.01;
-                    }
-                    let ba = this.Vy;
-                    let bb = -(ey-sy);
-                    let t = sx - (this.PoX + this.radus * Math.sign(scalar) * normalX); //adding radius of ball
-                    let r = sy - (this.PoY + this.radus * Math.sign(scalar) * normalY);
+                let ba = this.Vy;
+                let bb = -(ey-sy);
+                let t = sx - (this.PoX + this.radus * Math.sign(scalar) * normalX); //adding radius of ball
+                let r = sy - (this.PoY + this.radus * Math.sign(scalar) * normalY);
 
-                    aa /= ab;
-                    t /= ab;
-                    ba -= bb * aa;
-                    r -= bb * t;
-                    r /= ba;
+                aa /= ab;
+                t /= ab;
+                ba -= bb * aa;
+                r -= bb * t;
+                r /= ba;
 
-                    this.PoX += r * this.Vx;    //go to point of impact
-                    this.PoY += r * this.Vy;
+                this.PoX += r * this.Vx;    //go to point of impact
+                this.PoY += r * this.Vy;
 
-                    this.Vx -= scalar * normalX;    //translate vector correct way
-                    this.Vy -= scalar * normalY
-                    this.PoX += (1 - r) * this.Vx;   //move rest of way
-                    this.PoY += (1 - r) * this.Vy;
-                    slopeHit = true;
-                }
+                this.Vx -= scalar * normalX;    //translate vector correct way
+                this.Vy -= scalar * normalY;
+                this.PoX += (1 - r) * this.Vx;   //move rest of way
+                this.PoY += (1 - r) * this.Vy;
+                slopeHit = true;
             }
             if(slopeHit){
                 break;  //since no movement is left after bounce/ may result in tunneling
             }
         }
         
-        if(slopeHit == false){  //only update position if no slope was hit
+        if(!slopeHit){  //only update position if no slope was hit
             this.PoY += this.Vy;  
             this.PoX += this.Vx;    
         }
@@ -199,13 +160,13 @@ class Ball{
         ctx.arc(this.PoX + this.Vx, this.PoY + this.Vy, this.radus, 0 , 2 * Math.PI);
         ctx.stroke();
 
-        ctx.strokeStyle = "orange";
-        let cornerX = this.PoX - this.radus;
-        ctx.translate(this.PoX, this.PoY);
-        ctx.rotate(Math.acos(this.Vy / this.HSpeed) * (this.Vx < 0 ? 1:-1));
-        ctx.translate(-this.PoX, -this.PoY);
-        ctx.strokeRect(cornerX, this.PoY, 2 * this.radus * ((cornerX > this.PoX) ? -1:1), this.HSpeed);
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        // ctx.strokeStyle = "orange";
+        // let cornerX = this.PoX - this.radus;
+        // ctx.translate(this.PoX, this.PoY);
+        // ctx.rotate(Math.acos(this.Vy / this.HSpeed) * (this.Vx < 0 ? 1:-1));
+        // ctx.translate(-this.PoX, -this.PoY);
+        // ctx.strokeRect(cornerX, this.PoY, 2 * this.radus * ((cornerX > this.PoX) ? -1:1), this.HSpeed + this.radus);
+        // ctx.setTransform(1, 0, 0, 1, 0, 0);
     }
     getData(){
         let data = {X: this.PoX, Y: this.PoY, VSpeed: this.Vy, XSpeed:this.Vx, HSpeed: this.HSpeed};
