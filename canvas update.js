@@ -133,5 +133,3 @@ function redrawCanvas(){
         }
     }
 }
-
-// new Slope(0, 500, fldWidth, 500); 
