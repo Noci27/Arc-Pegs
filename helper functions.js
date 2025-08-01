@@ -96,7 +96,7 @@ function checkOverlap(S1, S2){
 }
 
 //same as previous function, but for circles as first shape
-//use following syntax: C = [x, y, radius]
+//use following syntax: C = [x, y, radius], NC = [[x, y], [x, y],...]
 function checkOverlapCircle(C, NC){
     if(!C || !NC || C.length == 0 || NC.length < 2){
         return false;

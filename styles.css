@@ -10,13 +10,14 @@ body, html{
     background-color: hsl(0, 0%, 90%);
     margin: 5px auto;
     display: block;
-    /* color: rgb(0, 185, 9); */
+    /* color: rgb(0, 157, 255); */
 }
 
 .coordinates{
     position: absolute;
     left: 4rem;
     top: 1rem;
+    user-select: none;
     /* background-color: hsla(0, 0%, 10%, 0.3); */
 }
 
