@@ -2,13 +2,17 @@ body, html{
     margin: 0;
     height: 100%;
     background-color: hsl(0, 0%, 50%);
-    overflow: hidden;
-    box-sizing: border-box;
+    overflow: auto;
+}
+
+.canvas-container{
+    position: relative;
+    margin: 5px auto;
 }
 
 #field{
     background-color: hsl(0, 0%, 90%);
-    margin: 5px auto;
+    margin: auto;
     display: block;
     /* color: rgb(0, 157, 255); */
 }
@@ -17,13 +21,54 @@ body, html{
     position: absolute;
     left: 4rem;
     top: 1rem;
-    user-select: none;
-    /* background-color: hsla(0, 0%, 10%, 0.3); */
 }
 
 .coordinates > p{
     display: block;
     margin: 0;
+}
+
+#interactiveLayer{
+    width: 1400px;
+    height: 600px;
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, 0);
+    user-select: none;
+    z-index: 2;
+    /* background-color: hsla(0, 0%, 10%, 0.3); */
+}
+
+#selectionWheel{
+    width: 10rem;
+    aspect-ratio: 1;
+    scale: 0;
+    background-color: hsla(0, 0%, 30%, 0.5);
+    position: absolute;
+    border: 3px solid hsl(0, 0%, 20%);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    background-image: conic-gradient(from 300deg, rgba(255, 255, 255, 0.5) 120deg, transparent 120deg 360deg);
+    mask-image: radial-gradient(transparent 10%, black 10% 100%);
+    z-index: 1;
+}
+
+#selectionWheel img{
+    width: 3rem;
+    height: 3rem;
+    position: absolute;
+    user-select: none;
+}
+
+#selectionWheel img:nth-child(2){
+    rotate: 120deg;
+    transform-origin: center 5rem;
+}
+
+#selectionWheel img:nth-child(3){
+    rotate: 240deg;
+    transform-origin: center 5rem;
 }
 
 p{

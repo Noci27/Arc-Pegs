@@ -1,22 +1,24 @@
-const field = document.getElementById("field");
+const field = document.getElementById("field");     //gameplay layer
 const ctx = field.getContext("2d"); //gives tools for drawing
+const interactiveLayer = document.getElementById("interactiveLayer");   //for UI and stuff
+const interactiveLayerCtx = interactiveLayer.getContext("2d");
 const fldWidth = field.width;
 const fldHeight = field.height;
 const gravity = 1.5;
 const friction = 0.8;
 const fieldCollission = new Path2D();
 fieldCollission.rect(0, 0, fldWidth, fldHeight);
-var brickData = new Array;  //holds info about pegs for redraw
-var brickCollisionPaths = new Array; //holds collision objects for all pegs
 var ballsData = new Array;  //holds your balls
+var brickData = new Array;  //holds info about bricks for redraw
 var slopeData = new Array;  //holds info about slopes
+var pegData = new Array;    //holds info about Pegs
 
 class Ball{
     constructor(x, y, radius){
         this.PoX = x;
         this.PoY = y;
         this.radus = radius;
-        this.Vx = 5;
+        this.Vx = 0;
         this.Vy = 0;
         this.HSpeed = Math.hypot(this.Vx, this.Vy);
         this.rot = 0;
@@ -27,45 +29,102 @@ class Ball{
     }
     update(){      
         let unmovedDist = 1;  //fraction of remaining movement
+        let nPoY = this.PoY + this.Vy;  //next intended position
+        let nPoX = this.PoX + this.Vx;
+        //-----Peg Collision-----
+        for(let peg of pegData){
+            let distance = Math.hypot((nPoX - peg.x), (nPoY - peg.y));
+            if(distance < this.radus + peg.r){
+                let translationX = (nPoX - peg.x) * (this.radus + peg.r - distance) / distance;
+                let translationY = (nPoY - peg.y) * (this.radus + peg.r - distance) / distance;
+                this.PoX += this.Vx + translationX;   //move outside of peg
+                this.PoY += this.Vy + translationY;
+                translationX /= (this.radus + peg.r - distance); //normalize vector
+                translationY /= (this.radus + peg.r - distance);
+                let scalar = 2 * friction * dotP(this.Vx, this.Vy, translationX, translationY); //mirror moving vector
+                this.Vx -= scalar * translationX;
+                this.Vy -= scalar * translationY;
+                unmovedDist = 0;
+                nPoX = this.PoX;
+                nPoY = this.PoY;
+            }
+        }
+
         //-----Slope Collision-----
-        let slopeDataLength = slopeData.length;
-        for(let i = 0; i < slopeDataLength; i++){
-            let {Sx: sx, Sy: sy, Ex: ex, Ey: ey} = slopeData[i];
-            let slopage = [[sx, sy], [ex, ey]];
-            if(checkOverlapCircle([this.PoX + this.Vx * unmovedDist, this.PoY + this.Vy * unmovedDist, this.radus], slopage)){
-                let [normalX, normalY] = normal((ex-sx), (ey-sy));
-                let scalar = 2 * friction * dotP(this.Vx, this.Vy, normalX, normalY);  //mirror moving vector + dampening
-                //using Gauss elimination to find point of impact
-                let aa = this.Vx * unmovedDist;
-                let ab = -(ex-sx);
-                if(ab == 0){    //prevent division by 0
-                    ab = 0.01;
+        if(unmovedDist != 0){
+            let slopeDataLength = slopeData.length;
+            for(let i = 0; i < slopeDataLength; i++){
+                let {Sx: sx, Sy: sy, Ex: ex, Ey: ey} = slopeData[i];
+                let slopage = [[sx, sy], [ex, ey]];
+                if(checkOverlapCircle([nPoX, nPoY, this.radus], slopage)){
+                    let [normalX, normalY] = normal((ex-sx), (ey-sy));
+                    let scalar = 2 * friction * dotP(this.Vx, this.Vy, normalX, normalY);  //mirror moving vector + dampening
+                    //using Gauss elimination to find point of impact
+                    let aa = this.Vx * unmovedDist;
+                    let ab = -(ex-sx);
+                    if(ab == 0){    //prevent division by 0
+                        ab = 0.01;
+                    }
+                    let ba = this.Vy * unmovedDist;
+                    if(ba == 0){
+                        ba = 0.01;
+                    }
+                    let bb = -(ey-sy);
+                    let t = sx - (this.PoX + this.radus * Math.sign(scalar) * normalX); //adding radius of ball
+                    let r = sy - (this.PoY + this.radus * Math.sign(scalar) * normalY);
+    
+                    aa /= ab;
+                    t /= ab;
+                    ba -= bb * aa;
+                    r -= bb * t;
+                    r /= ba;
+
+                    if(r < -0.5){  //happens when hitting edges
+                        let dist1 = Math.hypot((this.PoX - sx), (this.PoY - sy));
+                        let dist2 = Math.hypot((this.PoX - ex), (this.PoY - ey));
+                        let [unnormalX, unnormalY] = normal(normalX, normalY);  //bounces off other side
+                        scalar = 2 * friction * dotP(this.Vx, this.Vy, unnormalX, unnormalY);
+                        aa = normalX;
+                        ab = -this.Vx;
+                        if(ab == 0){    //prevent division by 0
+                            ab = 0.01;
+                        }
+                        ba = normalY;
+                        if(ba == 0){
+                            ba = 0.01;
+                        }                    
+                        bb = -this.Vy;
+                        t = this.PoX - ((dist1 < dist2 ? sx: ex) - this.radus * unnormalX * Math.sign(scalar));
+                        r = this.PoY - ((dist1 < dist2 ? sy: ey) - this.radus * unnormalY * Math.sign(scalar));
+
+                        aa /= ab;
+                        t /= ab;
+                        ba -= bb * aa;
+                        r -= bb * t;
+                        r /= ba;
+
+                        this.PoX = (dist1 < dist2 ? sx: ex) - this.radus * unnormalX * Math.sign(scalar) + r * normalX; //move back onto initial path
+                        this.PoY = (dist1 < dist2 ? sy: ey) - this.radus * unnormalY * Math.sign(scalar) + r * normalY;
+                        unmovedDist = 0;
+                        this.Vx -= scalar * unnormalX;    //translate vector correct way
+                        this.Vy -= scalar * unnormalY;    
+                        break;                    
+                    }
+    
+                    this.PoX += r * this.Vx * unmovedDist;    //go to point of impact
+                    this.PoY += r * this.Vy * unmovedDist;
+                    unmovedDist -= Math.hypot(r * this.Vx * unmovedDist, r * this.Vy * unmovedDist) / this.HSpeed;    //fraction of moved distance
+    
+                    this.Vx -= scalar * normalX;    //translate vector correct way
+                    this.Vy -= scalar * normalY;
+                    nPoX += this.Vx * unmovedDist;
+                    nPoY += this.Vy * unmovedDist; 
                 }
-                let ba = this.Vy * unmovedDist;
-                let bb = -(ey-sy);
-                let t = sx - (this.PoX + this.radus * Math.sign(scalar) * normalX); //adding radius of ball
-                let r = sy - (this.PoY + this.radus * Math.sign(scalar) * normalY);
-
-                aa /= ab;
-                t /= ab;
-                ba -= bb * aa;
-                r -= bb * t;
-                r /= ba;
-
-                this.PoX += r * this.Vx * unmovedDist;    //go to point of impact
-                this.PoY += r * this.Vy * unmovedDist;
-                unmovedDist -= Math.hypot(r * this.Vx * unmovedDist, r * this.Vy * unmovedDist) / this.HSpeed;    //fraction of moved distance
-
-                this.Vx -= scalar * normalX;    //translate vector correct way
-                this.Vy -= scalar * normalY;
-                // i = 0; //go through all slopes again
             }
         }
         
         //-----Spaghetti Block Collision Take 3-----
-        let nPoY = this.PoY + this.Vy * unmovedDist;  //next intended position
-        let nPoX = this.PoX + this.Vx * unmovedDist;
-        for(const path of brickCollisionPaths){ //+ 0.5 * this.radus so corners work
+        for(const path of brickData){ //+ 0.5 * this.radus so corners work
             let dx, dy = 0;
             if(nPoY > path.TLCornerY - this.radus && nPoY < path.TLCornerY + path.dy + this.radus){ //hit vertical side
                 let rightSideVariable = 0;  //used as width if hit right side
@@ -126,7 +185,9 @@ class Ball{
             }
             this.Vx *= -1;
         }
-
+        if(unmovedDist < 0){    //failsafe
+            unmovedDist = 0;
+        }
         this.PoX += unmovedDist * this.Vx;    //move ball
         this.PoY += unmovedDist * this.Vy;
         
@@ -137,7 +198,6 @@ class Ball{
 
         this.HSpeed = Math.hypot(this.Vx, this.Vy); //update HSpeed
         var circle = {shape: 1, PoX: this.PoX, PoY: this.PoY, Vx: this.Vx, Vy: this.Vy, rad: this.radus, rot: this.rot};
-        draw(circle);   //redraws the circle
         ballsData[0] = circle;  //update info in ballsData
     }
     showPath(){
@@ -167,13 +227,6 @@ class Brick{
         var rectangle = {shape: 2, TLCornerX: this.Cx, TLCornerY: this.Cy, dx: this.width, dy: this.height, color: Math.floor(Math.random() * 360)};
         draw(rectangle);
         brickData.push(rectangle);
-
-        var hitbox = {shape: 0, TLCornerX: this.Cx, TLCornerY: this.Cy, dx: this.width, dy: this.height}
-        hitbox.shape = new Path2D();
-        hitbox.shape.rect(this.Cx, this.Cy, this.width, this.height);
-        brickCollisionPaths.push(hitbox);    //creates collision object
-        // ctx.strokeStyle = "red";
-        // ctx.stroke(rectangle.shape);   //makes collision visible
     }
 }
 
@@ -195,9 +248,10 @@ class Peg{
     constructor(x, y, r){
         this.x = x;
         this.y = y;
-        this.radius = r;
+        this.radius = 10;
 
-        let peg = {shape: 4, x: this.x, y: this.y, r: this.radius};
+        let peg = {shape: 4, x: this.x, y: this.y, r: 10};
+        pegData.push(peg);
         draw(peg);
     }
 }
