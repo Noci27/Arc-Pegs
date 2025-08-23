@@ -4,7 +4,11 @@ var isDrawing = false;
 var selectedShape = 0;
 const activeText = document.getElementById("activeText");
 const assets = document.getElementsByName("shape");
-const radioImages = document.getElementsByTagName("img");
+const radioImages = document.querySelectorAll("[type=radio] + img");
+const selectionWheel = document.getElementById("selectionWheel");
+const selectionWheelImages = document.querySelectorAll("#selectionWheel img")
+const selectionWheelGrow = [{scale: 0}, {scale: 1}];    //animation keyframes
+var grown = false;
 
 function toggleDraw(){  //change text
     if(isActive == false){
@@ -32,21 +36,23 @@ function toggleDraw(){  //change text
     }
 }
 
-function updateSelected(shape){
+function updateSelected(shape){     //used when clicking on radio images
     selectedShape = shape;
 }
 
-field.addEventListener("mousedown", (event) => {
+interactiveLayer.addEventListener("mousedown", startPreview);
+function startPreview(event){
     if(isActive == true){
         startX = event.offsetX;
         startY = event.offsetY;
         endX = startX;  //so you don't get wrong previews on press
         endY = startY;
         isDrawing = true;   //is currently drawing
+        redrawCanvas();
     }
-})
+}
 
-field.addEventListener("mouseup", () => {
+interactiveLayer.addEventListener("mouseup", () => {
     if(isDrawing == true){
         switch(selectedShape){
             case 2: //block
@@ -65,15 +71,17 @@ field.addEventListener("mouseup", () => {
                 new Brick(startX, startY, width, height);
             break;
             case 3: //slope
-                ctx.strokeStyle = "black";
                 new Slope(startX, startY, endX, endY);
+            break;
+            case 4: //peg
+                new Peg(endX, endY);
             break;
         }
         isDrawing = false;
     }
 })
 
-field.addEventListener("mousemove", showPreview);
+interactiveLayer.addEventListener("mousemove", showPreview);
 function showPreview(event){
     if(isDrawing == true){
         endX = event.offsetX;
@@ -82,10 +90,34 @@ function showPreview(event){
     }
 }
 
-field.addEventListener("mousemove", updateCoords);  //coordinats at the top
+document.addEventListener("wheel", updateSelectionWheel, {passive: true});
+function updateSelectionWheel(event){
+    if(isActive){
+        selectedShape += Math.sign(event.deltaY);
+        selectedShape = ((selectedShape - 2 + 3) % 3) + 2; // cycles through 2, 3, 4
+        selectionWheel.style.backgroundImage = `conic-gradient(from ${300 + (selectedShape - 2) * 120}deg, rgba(255, 255, 255, 0.8) 120deg, transparent 120deg 360deg)`;
+        assets[selectedShape - 2].checked = true;
+        if(!grown){ //only grow when not already visible
+            selectionWheel.style.left = `calc(${event.x}px - 5rem)`;
+            selectionWheel.style.top = `calc(${event.y}px - 5rem)`;
+            selectionWheel.animate(selectionWheelGrow, {duration: 100, fill: "forwards"});
+            grown = true;
+        }
+    }
+}
+
+document.addEventListener("mousedown", shrink);
+function shrink(){
+    if(grown){  //only play animation when already visible
+        selectionWheel.animate(selectionWheelGrow, {duration: 100, fill: "forwards", direction: "reverse"});
+        grown = false;
+    }
+}
+
+interactiveLayer.addEventListener("mousemove", updateCoords);  //coordinats at the top
 function updateCoords(event){
     let xCoord = document.getElementById("xCoords");
-    xCoord.innerText = "x:" + event.offsetX;
+    xCoord.innerText = "x: " + event.offsetX;
     let yCoord = document.getElementById("yCoords");
-    yCoord.innerText = "y:" + event.offsetY;
+    yCoord.innerText = "y: " + event.offsetY;
 }

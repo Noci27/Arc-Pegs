@@ -104,17 +104,21 @@ function hardReset(){
     brickData = [];
     brickCollisionPaths = [];
     slopeData = [];
+    pegData = [];
     ballsData.splice(1, ballsData.length - 1);   //delete every but one ball
     redrawCanvas();
 }
 
 function redrawCanvas(){
     ctx.clearRect(0,0,fldWidth,fldHeight);  //clear whole canvas
-    for(const peg of brickData){    //redraw all bricks
-        draw(peg);
+    for(const brick of brickData){    //redraw all bricks
+        draw(brick);
     }
     for(const slope of slopeData){  //redraw all slopes
         draw(slope);
+    }
+    for(const peg of pegData){    //redraw all pegs
+        draw(peg);
     }
     for(const ball of ballsData){    //redraw all balls
         draw(ball);
@@ -130,6 +134,27 @@ function redrawCanvas(){
             case 3:
                 draw({shape: 3, Sx: startX, Sy: startY, Ex: endX, Ey: endY});
             break;
+            case 4:
+                ctx.beginPath();
+                ctx.arc(endX, endY, 10, 0, 2 * Math.PI);
+                ctx.fill();
+            break;
         }
     }
 }
+
+function getBoard(){
+    console.log(JSON.stringify({balls: ballsData, bricks: brickData, slopes: slopeData, pegs: pegData}, null, "\t"));
+}
+
+function putBoard(board){
+    if(board){
+        ballsData = board.balls;
+        brickData = board.bricks;
+        slopeData = board.slopes;
+        pegData = board.pegs;
+        redrawCanvas();
+    }
+}
+
+putBoard();

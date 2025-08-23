@@ -3,26 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Version 0.3">
+    <meta name="description" content="Version 0.4">
     <link rel="stylesheet" href="styles.css">
     <script src="physics.js" defer></script>
-    <script src="canvas update.js" defer></script>
     <script src="draw mode.js" defer></script>
     <script src="helper functions.js" defer></script>
+    <script src="canvas update.js" defer></script>
     <title>Ball</title>
 </head>
 <body>
-    <div class="coordinates">
-        <p id="xCoords">x</p>
-        <p id="yCoords">y</p>
+    <div class="canvas-container">
+        <canvas id="interactiveLayer" width="1400" height="600"></canvas>
+        <div class="coordinates">
+            <p id="xCoords">x: 0</p>
+            <p id="yCoords">y: 0</p>
+        </div>
+        <canvas id="field" width="1400" height="600">
+            <h1>Your browser does not support HTML Canvas (how old is your device??), no game for you :(</h1>
+        </canvas>
+        <div id="selectionWheel">
+             <img src="Assets/square2.png" alt="Brick" draggable="false">
+             <img src="Assets/line.png" alt="Line" draggable="false">
+             <img src="Assets/peg.png" alt="Peg" draggable="false">
+        </div>
     </div>
-    <canvas id="field" width="1400" height="600"></canvas>
     <div class="controls">
         <div class="simulation-controls">
             <abbr title="Returns the ball to it's original position, but does not delete placed objects"><button onclick="softReset()">🔁Soft Reset</button></abbr>
             <abbr title="Returns the ball to it's original position and deletes all placed objects"><button onclick="hardReset()">💣Hard Reset</button></abbr>
             <button onclick="start()">Start</button>
             <button onclick="pause()">Pause</button>
+            <abbr title="Prints all relevant information in the console in JSON for easy copying"><button onclick="getBoard()">Print Board</button></abbr>
         </div>
         <div class="draw-mode-controls">
             <button onclick="toggleDraw()">Draw mode</button>
@@ -31,11 +42,15 @@
             <div class="shapes">
                 <label>
                     <input type="radio" name="shape" value="2" onclick="updateSelected(2)" disabled>
-                    <img src="Assets/square2.png" alt="Square Peg" draggable="false">
+                    <img src="Assets/square2.png" alt="Brick" draggable="false">
                 </label>
                 <label>
                     <input type="radio" name="shape" value="3" onclick="updateSelected(3)" disabled>
                     <img src="Assets/line.png" alt="Line" draggable="false">
+                </label>
+                <label>
+                    <input type="radio" name="shape" value="4" onclick="updateSelected(4)" disabled>
+                    <img src="Assets/peg.png" alt="Peg" draggable="false">
                 </label>
             </div>
         </div>
@@ -46,7 +61,8 @@
         <ul>
             <li><strong>S</strong> - Start/Resume</li>
             <li><strong>P</strong> - Pause</li>
-            <li><strong>D</strong> - Enable/Disable Draw Mode</li>
+            <li><strong>D</strong> - Toggle Draw Mode</li>
+            <li><strong>Scroll</strong> - Switch Draw Object</li>
             <li><strong>Ctrl</strong> - Speed up</li>
             <li><strong>R</strong> - Soft Reset</li>
             <li><strong>Shift + R</strong> - Hard Reset</li>
