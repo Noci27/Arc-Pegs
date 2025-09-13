@@ -3,16 +3,17 @@ body, html{
     height: 100%;
     background-color: hsl(0, 0%, 50%);
     overflow: auto;
+    user-select: none;
 }
 
-.canvas-container{
+#canvas-container{
     position: relative;
     margin: 0;
 }
 .simulation{
     max-width: 100%;
     display:grid;
-    grid-template-columns: 2rem 1fr;
+    grid-template-columns: 3rem 1fr;
     /* border:3px solid red; */
 }
 
@@ -21,6 +22,7 @@ body, html{
     flex-direction: column;
     align-items: center;
     gap: 1em;
+    margin-top: 1rem;
 }
 
 .simulation-controller{ 
@@ -67,7 +69,6 @@ body, html{
     position: absolute;
     left: 50%;
     transform: translate(-50%, 0);
-    user-select: none;
     z-index: 2;
     /* background-color: hsla(0, 0%, 10%, 0.3); */
 }
@@ -91,7 +92,6 @@ body, html{
     width: 3rem;
     height: 3rem;
     position: absolute;
-    user-select: none;
 }
 
 #selectionWheel img:nth-child(2){

@@ -79,6 +79,13 @@ function speedDown(){
 }
 
 //-----Most important functions that the game wouldn't work without-----
+function resizeCanvas(){
+    let width = document.getElementById("canvas-container").scrollWidth;
+    field.width = width;
+    interactiveLayer.width = width;
+}
+resizeCanvas();
+
 function move(){
     // globTimer++;
     d.update();
