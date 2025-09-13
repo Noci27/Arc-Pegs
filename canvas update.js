@@ -5,6 +5,8 @@ const ballInitial = d.getData();
 var moveIntervalID;
 var ctrlPressed = false;
 const hotkeyMenu = document.getElementById("hotkeyMenu");
+var boardTranslationX = 0;
+var boardTranslationY = 0;
 
 //-----Hotkeys-----
 //maybe add an overly complicated secret hotkey later
@@ -33,6 +35,30 @@ document.addEventListener("keydown", (e) => {
             hardReset();
         break;
 
+        case "ArrowLeft":
+            ctx.translate(5, 0);
+            boardTranslationX += 5;
+            redrawCanvas();
+        break;
+
+        case "ArrowRight":
+            ctx.translate(-5, 0);
+            boardTranslationX -= 5;
+            redrawCanvas();
+        break;
+        
+        case "ArrowUp":
+            ctx.translate(0, 5);
+            boardTranslationY += 5;
+            redrawCanvas();
+        break;
+        
+        case "ArrowDown":
+            ctx.translate(0, -5);
+            boardTranslationY -= 5;
+            redrawCanvas();
+        break;
+        
         case "Control": //speed up simulation
             clearInterval(moveIntervalID);
             tickRate = 1;
@@ -110,7 +136,7 @@ function hardReset(){
 }
 
 function redrawCanvas(){
-    ctx.clearRect(0,0,fldWidth,fldHeight);  //clear whole canvas
+    ctx.clearRect(-boardTranslationX,-boardTranslationY,fldWidth,fldHeight);  //clear whole canvas
     for(const brick of brickData){    //redraw all bricks
         draw(brick);
     }

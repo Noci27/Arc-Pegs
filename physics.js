@@ -278,7 +278,7 @@ function draw(data){
             ctx.fillStyle = grad;   //makes the gradient
             
             ctx.fill(); //actually draws the circle
-            ctx.setTransform(1, 0, 0, 1, 0, 0); //resets transformations
+            // ctx.setTransform(1, 0, 0, 1, 0, 0); //resets transformations
             break;
         }
 

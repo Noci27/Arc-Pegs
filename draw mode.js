@@ -43,8 +43,8 @@ function updateSelected(shape){     //used when clicking on radio images
 interactiveLayer.addEventListener("mousedown", startPreview);
 function startPreview(event){
     if(isActive == true){
-        startX = event.offsetX;
-        startY = event.offsetY;
+        startX = event.offsetX - boardTranslationX;
+        startY = event.offsetY - boardTranslationY;
         endX = startX;  //so you don't get wrong previews on press
         endY = startY;
         isDrawing = true;   //is currently drawing
@@ -84,8 +84,8 @@ interactiveLayer.addEventListener("mouseup", () => {
 interactiveLayer.addEventListener("mousemove", showPreview);
 function showPreview(event){
     if(isDrawing == true){
-        endX = event.offsetX;
-        endY = event.offsetY;
+        endX = event.offsetX - boardTranslationX;
+        endY = event.offsetY - boardTranslationY;
         redrawCanvas();
     }
 }
@@ -117,7 +117,7 @@ function shrink(){
 interactiveLayer.addEventListener("mousemove", updateCoords);  //coordinats at the top
 function updateCoords(event){
     let xCoord = document.getElementById("xCoords");
-    xCoord.innerText = "x: " + event.offsetX;
+    xCoord.innerText = "x: " + (event.offsetX - boardTranslationX);
     let yCoord = document.getElementById("yCoords");
-    yCoord.innerText = "y: " + event.offsetY;
+    yCoord.innerText = "y: " + (event.offsetY - boardTranslationY);
 }
