@@ -5,6 +5,7 @@ const ballInitial = d.getData();
 var moveIntervalID;
 var ctrlPressed = false;
 const hotkeyMenu = document.getElementById("hotkeyMenu");
+const materialChangeStuff = document.getElementById("googleMaterialFuckeryWizardry");
 var boardTranslationX = 0;
 var boardTranslationY = 0;
 
@@ -12,14 +13,8 @@ var boardTranslationY = 0;
 //maybe add an overly complicated secret hotkey later
 document.addEventListener("keydown", (e) => {
     switch (e.key){
-        case "s":   //starts simulation
-        case "S":
-            start();    
-        break;
-        
-        case "p":   //pauses simulation
-        case "P":
-            pause();
+        case " ":   //starts/pauses simulation
+            startButton();
         break;
 
         case "d":
@@ -98,6 +93,17 @@ function openHotkeyMenu(){
     hotkeyMenu.showModal();
 }
 
+function startButton(){
+    if(moveIntervalID){
+        pause();
+        materialChangeStuff.innerHTML = "play_arrow";
+    }
+    else{
+        start();
+        materialChangeStuff.innerHTML = "pause";
+    }
+}
+
 function start(){
     clearInterval(moveIntervalID);  //so it doesn't speed up when pressed again
     moveIntervalID = setInterval(move, tickRate);   //update the canvas
@@ -105,10 +111,12 @@ function start(){
 
 function pause(){
     clearInterval(moveIntervalID);
+    moveIntervalID = 0; //to determine wether or not simulation is running
 }
 
 function softReset(){
     clearInterval(moveIntervalID);
+    moveIntervalID = 0;
     let ball = ballsData[0];    //reset both ball and ballsdata
     ball.PoX = ballInitial.X;
     ball.PoY = ballInitial.Y;
@@ -124,6 +132,7 @@ function softReset(){
 
 function hardReset(){
     clearInterval(moveIntervalID);
+    moveIntervalID = 0;
     let ball = ballsData[0];
     ball.PoX = ballInitial.X;
     ball.PoY = ballInitial.Y;
@@ -144,6 +153,7 @@ function hardReset(){
 
 function redrawCanvas(){
     ctx.clearRect(-boardTranslationX,-boardTranslationY,fldWidth,fldHeight);  //clear whole canvas
+    ctx.stroke(fieldCollission);
     for(const brick of brickData){    //redraw all bricks
         draw(brick);
     }
