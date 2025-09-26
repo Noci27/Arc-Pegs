@@ -1,6 +1,6 @@
 var tickRate = 50/3; //50/3 = 60fps
 // var globTimer = 0;
-let d = new Ball(310, 120, 20);
+var d = new Ball(310, 120, 20);
 const ballInitial = d.getData();
 var moveIntervalID;
 var ctrlPressed = false;
@@ -78,6 +78,11 @@ function resizeCanvas(){
     let width = document.getElementById("canvas-container").scrollWidth;
     field.width = width;
     interactiveLayer.width = width;
+    let height = document.getElementById("canvas-container").scrollHeight;
+    field.height = height;
+    interactiveLayer.height = height;
+    fldHeight = height;
+    fldWidth = width;
 }
 resizeCanvas();
 
@@ -115,8 +120,8 @@ function pause(){
 }
 
 function softReset(){
-    clearInterval(moveIntervalID);
-    moveIntervalID = 0;
+    pause();
+    materialChangeStuff.innerHTML = "play_arrow";
     let ball = ballsData[0];    //reset both ball and ballsdata
     ball.PoX = ballInitial.X;
     ball.PoY = ballInitial.Y;
@@ -131,8 +136,8 @@ function softReset(){
 }
 
 function hardReset(){
-    clearInterval(moveIntervalID);
-    moveIntervalID = 0;
+    pause();
+    materialChangeStuff.innerHTML = "play_arrow";
     let ball = ballsData[0];
     ball.PoX = ballInitial.X;
     ball.PoY = ballInitial.Y;

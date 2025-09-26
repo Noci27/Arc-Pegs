@@ -2,8 +2,8 @@ const field = document.getElementById("field");     //gameplay layer
 const ctx = field.getContext("2d"); //gives tools for drawing
 const interactiveLayer = document.getElementById("interactiveLayer");   //for UI and stuff
 const interactiveLayerCtx = interactiveLayer.getContext("2d");
-const fldWidth = field.width;
-const fldHeight = field.height;
+var fldWidth = field.width; //need to be var for varied screen sizes
+var fldHeight = field.height;
 const gravity = 1.5;
 const friction = 0.8;
 const fieldCollission = new Path2D();
@@ -161,33 +161,6 @@ class Ball{
             }
         }
         
-        //-----Vertical Movement-----
-        if(!ctx.isPointInPath(fieldCollission, this.PoX, nPoY + this.radus * Math.sign(this.Vy))){    //bounce of level boundaries
-            if(Math.sign(this.Vy) == 1){
-                this.PoY = fldHeight - this.radus;
-            }
-            else{
-                this.PoY = this.radus;
-            }
-            this.Vy = this.Vy * -friction + gravity;
-            if(Math.abs(this.Vy) < 2){   //stick to ground if speed is to low
-                this.Vy = 0;
-            }
-        }
-        
-        //-----Horizontal Movement-----
-        if(!ctx.isPointInPath(fieldCollission, nPoX + this.radus * Math.sign(this.Vx), this.PoY)){    //bounce of level boundaries
-            if(Math.sign(this.Vx) == 1){
-                this.PoX = fldWidth - this.radus;
-            }
-            else{
-                this.PoX = this.radus;
-            }
-            this.Vx *= -1;
-        }
-        if(unmovedDist < 0){    //failsafe
-            unmovedDist = 0;
-        }
         this.PoX += unmovedDist * this.Vx;    //move ball
         this.PoY += unmovedDist * this.Vy;
         
@@ -262,6 +235,7 @@ function draw(data){
     //1 = Circle -> {PosX, PosY, rad}
     //2 = Rectangle -> {TLCornerX, TLCornerY, dx, dy, color}
     //3 = Line -> {Sx, Sy, Ex, Ey, color}
+    //4 = Peg -> {x, y, r}
 
     switch(data.shape){
         case 1:{
@@ -270,15 +244,14 @@ function draw(data){
             ctx.arc(x, y, r, 0, 2 * Math.PI); //defines the circle
 
             ctx.translate(x, y);  //rotate around center
-            ctx.rotate(rot);    
-            ctx.translate(-x, -y);
-            let grad = ctx.createRadialGradient(x - r/2, y - r/2, 1, x, y, r); 
+            ctx.rotate(rot);
+            let grad = ctx.createRadialGradient(r/2, -r/2, 1, 0, 0, r); 
             grad.addColorStop(0, "lightgreen");
             grad.addColorStop(1, "rgb(0, 185, 9)");
             ctx.fillStyle = grad;   //makes the gradient
             
             ctx.fill(); //actually draws the circle
-            // ctx.setTransform(1, 0, 0, 1, 0, 0); //resets transformations
+            ctx.setTransform(1, 0, 0, 1, boardTranslationX, boardTranslationY); //reset transformations
             break;
         }
 
