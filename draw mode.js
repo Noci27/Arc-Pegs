@@ -1,7 +1,7 @@
 var isActive = false;
 var startX, startY, endX, endY;
 var isDrawing = false;
-var selectedShape = 0;
+var selectedShape = 2;
 const activeText = document.getElementById("activeText");
 const assets = document.getElementsByName("shape");
 const radioImages = document.querySelectorAll("[type=radio] + img");
@@ -52,6 +52,19 @@ function startPreview(event){
     }
 }
 
+interactiveLayer.addEventListener("mousedown", () => {
+    if(!isActive){
+        interactiveLayer.addEventListener("mousemove", dragCanvas);
+        document.addEventListener("mouseup", () => {interactiveLayer.removeEventListener("mousemove", dragCanvas)});
+    }
+});
+function dragCanvas(event){
+    ctx.translate(event.movementX, event.movementY);
+    boardTranslationX += event.movementX;
+    boardTranslationY += event.movementY;
+    redrawCanvas();
+}
+
 interactiveLayer.addEventListener("mouseup", () => {
     if(isDrawing == true){
         switch(selectedShape){
@@ -81,13 +94,20 @@ interactiveLayer.addEventListener("mouseup", () => {
     }
 })
 
-interactiveLayer.addEventListener("mousemove", showPreview);
+interactiveLayer.addEventListener("mousemove", (event) => {updateCoords(event);showPreview(event)});
 function showPreview(event){
     if(isDrawing == true){
         endX = event.offsetX - boardTranslationX;
         endY = event.offsetY - boardTranslationY;
         redrawCanvas();
     }
+}
+
+function updateCoords(event){
+    let xCoord = document.getElementById("xCoords");
+    xCoord.innerText = "x: " + (event.offsetX - boardTranslationX);
+    let yCoord = document.getElementById("yCoords");
+    yCoord.innerText = "y: " + (event.offsetY - boardTranslationY);
 }
 
 document.addEventListener("wheel", updateSelectionWheel, {passive: true});
@@ -112,12 +132,4 @@ function shrink(){
         selectionWheel.animate(selectionWheelGrow, {duration: 100, fill: "forwards", direction: "reverse"});
         grown = false;
     }
-}
-
-interactiveLayer.addEventListener("mousemove", updateCoords);  //coordinats at the top
-function updateCoords(event){
-    let xCoord = document.getElementById("xCoords");
-    xCoord.innerText = "x: " + (event.offsetX - boardTranslationX);
-    let yCoord = document.getElementById("yCoords");
-    yCoord.innerText = "y: " + (event.offsetY - boardTranslationY);
 }

@@ -9,7 +9,7 @@ const materialChangeStuff = document.getElementById("googleMaterialFuckeryWizard
 var boardTranslationX = 0;
 var boardTranslationY = 0;
 
-//-----Hotkeys-----
+//-----Hotkeys and stuff-----
 //maybe add an overly complicated secret hotkey later
 document.addEventListener("keydown", (e) => {
     switch (e.key){
@@ -73,6 +73,10 @@ function speedDown(){
     start();
 }
 
+function openHotkeyMenu(){
+    hotkeyMenu.showModal();
+}
+
 //-----Most important functions that the game wouldn't work without-----
 function resizeCanvas(){
     let width = document.getElementById("canvas-container").scrollWidth;
@@ -86,6 +90,40 @@ function resizeCanvas(){
 }
 resizeCanvas();
 
+function redrawCanvas(){
+    ctx.clearRect(-boardTranslationX,-boardTranslationY,fldWidth,fldHeight);  //clear whole canvas
+    for(const brick of brickData){    //redraw all bricks
+        draw(brick);
+    }
+    for(const slope of slopeData){  //redraw all slopes
+        draw(slope);
+    }
+    for(const peg of pegData){    //redraw all pegs
+        draw(peg);
+    }
+    for(const ball of ballsData){    //redraw all balls
+        draw(ball);
+    }
+    if(isDrawing == true){  //redraw previews
+        ctx.fillStyle = "hsla(0, 0%, 10%, 0.3)";
+        ctx.strokeStyle = "hsla(0, 0%, 10%, 0.3)";
+        switch(selectedShape){
+            case 2:
+                ctx.fillRect(startX, startY, endX - startX, endY - startY);
+            break;
+
+            case 3:
+                draw({shape: 3, Sx: startX, Sy: startY, Ex: endX, Ey: endY});
+            break;
+            case 4:
+                ctx.beginPath();
+                ctx.arc(endX, endY, 10, 0, 2 * Math.PI);
+                ctx.fill();
+            break;
+        }
+    }
+}
+
 function move(){
     // globTimer++;
     d.update();
@@ -94,10 +132,7 @@ function move(){
     // console.log(d.getData());
 }
 
-function openHotkeyMenu(){
-    hotkeyMenu.showModal();
-}
-
+//-----Control buttons on the side-----
 function startButton(){
     if(moveIntervalID){
         pause();
@@ -154,41 +189,6 @@ function hardReset(){
     pegData = [];
     ballsData.splice(1, ballsData.length - 1);   //delete every but one ball
     redrawCanvas();
-}
-
-function redrawCanvas(){
-    ctx.clearRect(-boardTranslationX,-boardTranslationY,fldWidth,fldHeight);  //clear whole canvas
-    ctx.stroke(fieldCollission);
-    for(const brick of brickData){    //redraw all bricks
-        draw(brick);
-    }
-    for(const slope of slopeData){  //redraw all slopes
-        draw(slope);
-    }
-    for(const peg of pegData){    //redraw all pegs
-        draw(peg);
-    }
-    for(const ball of ballsData){    //redraw all balls
-        draw(ball);
-    }
-    if(isDrawing == true){  //redraw previews
-        ctx.fillStyle = "hsla(0, 0%, 10%, 0.3)";
-        ctx.strokeStyle = "hsla(0, 0%, 10%, 0.3)";
-        switch(selectedShape){
-            case 2:
-                ctx.fillRect(startX, startY, endX - startX, endY - startY);
-            break;
-
-            case 3:
-                draw({shape: 3, Sx: startX, Sy: startY, Ex: endX, Ey: endY});
-            break;
-            case 4:
-                ctx.beginPath();
-                ctx.arc(endX, endY, 10, 0, 2 * Math.PI);
-                ctx.fill();
-            break;
-        }
-    }
 }
 
 function getBoard(){
