@@ -192,7 +192,9 @@ function hardReset(){
 }
 
 function getBoard(){
-    console.log(JSON.stringify({balls: ballsData, bricks: brickData, slopes: slopeData, pegs: pegData}, null, "\t"));
+    let board = JSON.stringify({balls: ballsData, bricks: brickData, slopes: slopeData, pegs: pegData}, null, "\t");
+    navigator.clipboard.writeText(board);
+    console.log(board);
 }
 
 function putBoard(board){
