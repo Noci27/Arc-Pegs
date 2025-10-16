@@ -1,6 +1,6 @@
 var tickRate = 50/3; //50/3 = 60fps
 // var globTimer = 0;
-var d = new Ball(310, 120, 20);
+var d = new Ball(310, 320, 20);
 const ballInitial = d.getData();
 var moveIntervalID;
 var ctrlPressed = false;
@@ -31,26 +31,26 @@ document.addEventListener("keydown", (e) => {
         break;
 
         case "ArrowLeft":
-            ctx.translate(5, 0);
-            boardTranslationX += 5;
+            ctx.translate(15, 0);
+            boardTranslationX += 15;
             redrawCanvas();
         break;
 
         case "ArrowRight":
-            ctx.translate(-5, 0);
-            boardTranslationX -= 5;
+            ctx.translate(-15, 0);
+            boardTranslationX -= 15;
             redrawCanvas();
         break;
         
         case "ArrowUp":
-            ctx.translate(0, 5);
-            boardTranslationY += 5;
+            ctx.translate(0, 15);
+            boardTranslationY += 15;
             redrawCanvas();
         break;
         
         case "ArrowDown":
-            ctx.translate(0, -5);
-            boardTranslationY -= 5;
+            ctx.translate(0, -15);
+            boardTranslationY -= 15;
             redrawCanvas();
         break;
         
@@ -87,6 +87,11 @@ function resizeCanvas(){
     interactiveLayer.height = height;
     fldHeight = height;
     fldWidth = width;
+    cameraMoveBox.x = fldWidth * 0.2;   //initialize camera box
+    cameraMoveBox.y = fldHeight * 0.3;
+    cameraMoveBox.dx = fldWidth * 0.6;
+    cameraMoveBox.dy = fldHeight * 0.4;
+    cameraMoveBox.path.rect(cameraMoveBox.x, cameraMoveBox.y, cameraMoveBox.dx, cameraMoveBox.dy);
 }
 resizeCanvas();
 
@@ -122,6 +127,8 @@ function redrawCanvas(){
             break;
         }
     }
+    // ctx.strokeStyle = "rgb(29, 128, 102)"
+    // ctx.stroke(cameraMoveBox.path);
 }
 
 function move(){
@@ -167,6 +174,13 @@ function softReset(){
     d.Vx = ballInitial.XSpeed;
     d.Vy = ballInitial.VSpeed;
 
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    boardTranslationX = 0;
+    boardTranslationY = 0;
+    cameraMoveBox.x = fldWidth * 0.2;
+    cameraMoveBox.y = fldHeight * 0.3;
+    cameraMoveBox.path = new Path2D();
+    cameraMoveBox.path.rect(cameraMoveBox.x, cameraMoveBox.y, cameraMoveBox.dx, cameraMoveBox.dy);
     redrawCanvas();
 }
 
@@ -188,6 +202,14 @@ function hardReset(){
     slopeData = [];
     pegData = [];
     ballsData.splice(1, ballsData.length - 1);   //delete every but one ball
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    boardTranslationX = 0;
+    boardTranslationY = 0;
+    cameraMoveBox.x = fldWidth * 0.2;
+    cameraMoveBox.y = fldHeight * 0.3;
+    cameraMoveBox.path = new Path2D();
+    cameraMoveBox.path.rect(cameraMoveBox.x, cameraMoveBox.y, cameraMoveBox.dx, cameraMoveBox.dy);
     redrawCanvas();
 }
 

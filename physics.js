@@ -6,8 +6,7 @@ var fldWidth = field.width; //need to be var for varied screen sizes
 var fldHeight = field.height;
 const gravity = 1.5;
 const friction = 0.8;
-const fieldCollission = new Path2D();
-fieldCollission.rect(0, 0, fldWidth, fldHeight);
+var cameraMoveBox = {x: 0, y: 0, dx: 0, dy: 0, path: new Path2D()};
 var ballsData = new Array;  //holds your balls
 var brickData = new Array;  //holds info about bricks for redraw
 var slopeData = new Array;  //holds info about slopes
@@ -164,6 +163,36 @@ class Ball{
         this.PoX += unmovedDist * this.Vx;    //move ball
         this.PoY += unmovedDist * this.Vy;
         
+        //-----Camera-----
+        if(!contains({x: this.PoX, y: this.PoY}, [[cameraMoveBox.x, cameraMoveBox.y], [cameraMoveBox.x + cameraMoveBox.dx, cameraMoveBox.y], [cameraMoveBox.x + cameraMoveBox.dx, cameraMoveBox.y + cameraMoveBox.dy], [cameraMoveBox.x, cameraMoveBox.y + cameraMoveBox.dy]])){
+            let distX = cameraMoveBox.x - this.PoX;
+            let distY = cameraMoveBox.y - this.PoY;
+            if(distX < 0){  //check in which octant ball is
+                if(-distX < cameraMoveBox.dx){
+                    distX = 0;
+                }
+                else{
+                    distX += cameraMoveBox.dx;
+                }
+            }
+            if(distY < 0){
+                if(-distY < cameraMoveBox.dy){
+                    distY = 0;
+                }
+                else{
+                    distY += cameraMoveBox.dy;
+                }
+            }
+            ctx.translate(distX, distY);
+            boardTranslationX += distX
+            boardTranslationY += distY;
+            cameraMoveBox.x -= distX;
+            cameraMoveBox.y -= distY;
+            
+            cameraMoveBox.path = new Path2D();   //update path for debugging
+            cameraMoveBox.path.rect(cameraMoveBox.x, cameraMoveBox.y, cameraMoveBox.dx, cameraMoveBox.dy);
+        }
+
         this.Vy += gravity;
 
         //-----Rotation uhhhhhhhhhhh-----

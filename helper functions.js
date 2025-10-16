@@ -13,6 +13,37 @@ function normal(Vx, Vy){    //returns an array containing the components of a no
     return [normX, normY];
 }
 
+//returns true if both lines intersect each other
+//syntax: line = [[x, y], [x, y]]
+function areCrossing(line1, line2){
+    let aa = line1[1][0] - line1[0][0];
+    if(aa == 0){
+        aa = 0.001;
+    }
+    let ab = line2[0][0] - line2[1][0];
+    let ba = line1[1][1] - line1[0][1];
+    let bb = line2[0][1] - line2[1][1];
+    if(bb == 0){
+        bb = 0.001;
+    }
+    let r = line2[0][0] - line1[0][0];
+    let s = line2[0][1] - line1[0][1];
+
+    ab /= aa;
+    r /= aa;
+    bb -= ba * ab;
+    s -= ba * r;
+    s /= bb;
+    r -= ab * s;
+
+    if(s >= 0 && s <= 1 && r >= 0 && r <= 1){
+        return true;
+    }
+    else{
+        return false;
+    }
+}
+
 //-----Miscellaneous helper functions-----
 
 //returns true if the given shapes overlap (Using SAT; NO circles, use next function for that), S1 and S2 are SORTED(!) arrays of vertices
@@ -158,4 +189,34 @@ function checkOverlapCircle(C, NC){
         return false;
     }
     return true;
+}
+
+//returns true if point is within the container
+//syntax: point = {x:..., y:...}, container = [[x, y], ...] (points must be in order)
+function contains(point, container){
+    let numOfVertices = container.length;
+    if(numOfVertices < 3){  //checks if container is a simple polygon
+        return false;
+    }
+    let intersections = 0;
+    for(let i = 0; i < numOfVertices; i++){
+        if(point.y == container[i][1]){ //if line goes through vertex/vertices
+            let offsetNext = Math.sign(point.y - container[(i+1)%numOfVertices][1]);
+            let offsetPrev = Math.sign(point.y - container[(i-1+numOfVertices)%numOfVertices][1]);
+            if(offsetNext == offsetPrev || offsetNext == 0){
+                intersections++;
+            }
+        }
+        else{
+            if(areCrossing([[point.x, point.y],[Number.MAX_SAFE_INTEGER, point.y]], [container[i],container[(i+1)%numOfVertices]])){
+                intersections++;
+            }
+        }
+    }
+    if(intersections % 2 != 0){ //even-odd rule
+        return true;
+    }
+    else{
+        return false;
+    }
 }
