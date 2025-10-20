@@ -6,7 +6,6 @@ var fldWidth = field.width; //need to be var for varied screen sizes
 var fldHeight = field.height;
 const gravity = 1.5;
 const friction = 0.8;
-var cameraMoveBox = {x: 0, y: 0, dx: 0, dy: 0, path: new Path2D()};
 var ballsData = new Array;  //holds your balls
 var brickData = new Array;  //holds info about bricks for redraw
 var slopeData = new Array;  //holds info about slopes
@@ -164,33 +163,26 @@ class Ball{
         this.PoY += unmovedDist * this.Vy;
         
         //-----Camera-----
-        if(!contains({x: this.PoX, y: this.PoY}, [[cameraMoveBox.x, cameraMoveBox.y], [cameraMoveBox.x + cameraMoveBox.dx, cameraMoveBox.y], [cameraMoveBox.x + cameraMoveBox.dx, cameraMoveBox.y + cameraMoveBox.dy], [cameraMoveBox.x, cameraMoveBox.y + cameraMoveBox.dy]])){
-            let distX = cameraMoveBox.x - this.PoX;
-            let distY = cameraMoveBox.y - this.PoY;
+        if(!contains({x: this.PoX, y: this.PoY}, [[camera.cameraMoveBox.x, camera.cameraMoveBox.y], [camera.cameraMoveBox.x + camera.cameraMoveBox.dx, camera.cameraMoveBox.y], [camera.cameraMoveBox.x + camera.cameraMoveBox.dx, camera.cameraMoveBox.y + camera.cameraMoveBox.dy], [camera.cameraMoveBox.x, camera.cameraMoveBox.y + camera.cameraMoveBox.dy]])){
+            let distX = camera.cameraMoveBox.x - this.PoX;
+            let distY = camera.cameraMoveBox.y - this.PoY;
             if(distX < 0){  //check in which octant ball is
-                if(-distX < cameraMoveBox.dx){
+                if(-distX < camera.cameraMoveBox.dx){
                     distX = 0;
                 }
                 else{
-                    distX += cameraMoveBox.dx;
+                    distX += camera.cameraMoveBox.dx;
                 }
             }
             if(distY < 0){
-                if(-distY < cameraMoveBox.dy){
+                if(-distY < camera.cameraMoveBox.dy){
                     distY = 0;
                 }
                 else{
-                    distY += cameraMoveBox.dy;
+                    distY += camera.cameraMoveBox.dy;
                 }
             }
-            ctx.translate(distX, distY);
-            boardTranslationX += distX
-            boardTranslationY += distY;
-            cameraMoveBox.x -= distX;
-            cameraMoveBox.y -= distY;
-            
-            cameraMoveBox.path = new Path2D();   //update path for debugging
-            cameraMoveBox.path.rect(cameraMoveBox.x, cameraMoveBox.y, cameraMoveBox.dx, cameraMoveBox.dy);
+            camera.move(-distX, -distY);
         }
 
         this.Vy += gravity;
@@ -280,7 +272,7 @@ function draw(data){
             ctx.fillStyle = grad;   //makes the gradient
             
             ctx.fill(); //actually draws the circle
-            ctx.setTransform(1, 0, 0, 1, boardTranslationX, boardTranslationY); //reset transformations
+            ctx.setTransform(1, 0, 0, 1, -camera.x, -camera.y); //reset transformations
             break;
         }
 

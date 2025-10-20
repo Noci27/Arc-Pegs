@@ -1,13 +1,12 @@
 var tickRate = 50/3; //50/3 = 60fps
 // var globTimer = 0;
-var d = new Ball(310, 320, 20);
-const ballInitial = d.getData();
+var camera = null;
+var d = null;
+var ballInitial = null;
 var moveIntervalID;
 var ctrlPressed = false;
 const hotkeyMenu = document.getElementById("hotkeyMenu");
 const materialChangeStuff = document.getElementById("googleMaterialFuckeryWizardry");
-var boardTranslationX = 0;
-var boardTranslationY = 0;
 
 //-----Hotkeys and stuff-----
 //maybe add an overly complicated secret hotkey later
@@ -31,26 +30,22 @@ document.addEventListener("keydown", (e) => {
         break;
 
         case "ArrowLeft":
-            ctx.translate(15, 0);
-            boardTranslationX += 15;
+            camera.move(-15, 0);
             redrawCanvas();
         break;
 
         case "ArrowRight":
-            ctx.translate(-15, 0);
-            boardTranslationX -= 15;
+            camera.move(15, 0); 
             redrawCanvas();
         break;
         
         case "ArrowUp":
-            ctx.translate(0, 15);
-            boardTranslationY += 15;
+            camera.move(0, -15);
             redrawCanvas();
         break;
         
         case "ArrowDown":
-            ctx.translate(0, -15);
-            boardTranslationY -= 15;
+            camera.move(0, 15);
             redrawCanvas();
         break;
         
@@ -77,8 +72,42 @@ function openHotkeyMenu(){
     hotkeyMenu.showModal();
 }
 
+//-----Camera Object Class-----
+class Camera{
+    constructor(x, y, dx, dy){
+        this.x = typeof(x) === "number" ? x: 0; //part of screen that's shown
+        this.y = typeof(y) === "number" ? y: 0;
+        this.dx = typeof(dx) === "number" ? dx: fldWidth;
+        this.dy = typeof(dy) === "number" ? dy: fldHeight;
+        this.cameraMoveBox = {x: this.dx * 0.2, y: this.dy * 0.3, dx: this.dx * 0.6, dy: this.dy * 0.4, path: new Path2D()};    //rectangle that handles automatic camera movement
+        this.cameraMoveBox.path.rect(this.cameraMoveBox.x, this.cameraMoveBox.y, this.cameraMoveBox.dx, this.cameraMoveBox.dy);
+
+        this.xInitial = this.x;  //const for reset method
+        this.yInitaial = this.y;
+        ctx.translate(-this.x, -this.y);
+    }
+    move(x, y){    //shifts the visible part of screen by specified amount
+        ctx.translate(-x, -y);
+        this.x += x;
+        this.y += y;
+        this.cameraMoveBox.x += x;
+        this.cameraMoveBox.y += y;
+        this.cameraMoveBox.path = new Path2D();   //update path for debugging
+        this.cameraMoveBox.path.rect(this.cameraMoveBox.x, this.cameraMoveBox.y, this.cameraMoveBox.dx, this.cameraMoveBox.dy);
+    }
+    reset(){    //reset all camera transformations
+        this.move(this.xInitial - this.x, this.yInitaial - this.y);
+    }
+    draw(){     //show camera boundaries
+        ctx.lineWidth = 1;
+        ctx.moveTo(this.cameraMoveBox.x, this.cameraMoveBox.y);
+        ctx.strokeStyle = "rgb(29, 128, 102)"
+        ctx.stroke(this.cameraMoveBox.path);
+    }
+}
+
 //-----Most important functions that the game wouldn't work without-----
-function resizeCanvas(){
+function initializeCanvas(){
     let width = document.getElementById("canvas-container").scrollWidth;
     field.width = width;
     interactiveLayer.width = width;
@@ -87,16 +116,14 @@ function resizeCanvas(){
     interactiveLayer.height = height;
     fldHeight = height;
     fldWidth = width;
-    cameraMoveBox.x = fldWidth * 0.2;   //initialize camera box
-    cameraMoveBox.y = fldHeight * 0.3;
-    cameraMoveBox.dx = fldWidth * 0.6;
-    cameraMoveBox.dy = fldHeight * 0.4;
-    cameraMoveBox.path.rect(cameraMoveBox.x, cameraMoveBox.y, cameraMoveBox.dx, cameraMoveBox.dy);
+    camera = new Camera();
+    d = new Ball(310, 320, 20);
+    ballInitial = d.getData();
 }
-resizeCanvas();
+initializeCanvas();
 
 function redrawCanvas(){
-    ctx.clearRect(-boardTranslationX,-boardTranslationY,fldWidth,fldHeight);  //clear whole canvas
+    ctx.clearRect(camera.x,camera.y,fldWidth,fldHeight);  //clear screen
     for(const brick of brickData){    //redraw all bricks
         draw(brick);
     }
@@ -120,6 +147,7 @@ function redrawCanvas(){
             case 3:
                 draw({shape: 3, Sx: startX, Sy: startY, Ex: endX, Ey: endY});
             break;
+
             case 4:
                 ctx.beginPath();
                 ctx.arc(endX, endY, 10, 0, 2 * Math.PI);
@@ -127,8 +155,7 @@ function redrawCanvas(){
             break;
         }
     }
-    // ctx.strokeStyle = "rgb(29, 128, 102)"
-    // ctx.stroke(cameraMoveBox.path);
+    // camera.draw();
 }
 
 function move(){
@@ -174,13 +201,7 @@ function softReset(){
     d.Vx = ballInitial.XSpeed;
     d.Vy = ballInitial.VSpeed;
 
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    boardTranslationX = 0;
-    boardTranslationY = 0;
-    cameraMoveBox.x = fldWidth * 0.2;
-    cameraMoveBox.y = fldHeight * 0.3;
-    cameraMoveBox.path = new Path2D();
-    cameraMoveBox.path.rect(cameraMoveBox.x, cameraMoveBox.y, cameraMoveBox.dx, cameraMoveBox.dy);
+    camera.reset();
     redrawCanvas();
 }
 
@@ -203,13 +224,7 @@ function hardReset(){
     pegData = [];
     ballsData.splice(1, ballsData.length - 1);   //delete every but one ball
 
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    boardTranslationX = 0;
-    boardTranslationY = 0;
-    cameraMoveBox.x = fldWidth * 0.2;
-    cameraMoveBox.y = fldHeight * 0.3;
-    cameraMoveBox.path = new Path2D();
-    cameraMoveBox.path.rect(cameraMoveBox.x, cameraMoveBox.y, cameraMoveBox.dx, cameraMoveBox.dy);
+    camera.reset();
     redrawCanvas();
 }
 

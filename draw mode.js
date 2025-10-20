@@ -43,8 +43,8 @@ function updateSelected(shape){     //used when clicking on radio images
 interactiveLayer.addEventListener("mousedown", startPreview);
 function startPreview(event){
     if(isActive == true){
-        startX = event.offsetX - boardTranslationX;
-        startY = event.offsetY - boardTranslationY;
+        startX = camera.x + event.offsetX;
+        startY = camera.y + event.offsetY;
         endX = startX;  //so you don't get wrong previews on press
         endY = startY;
         isDrawing = true;   //is currently drawing
@@ -59,9 +59,7 @@ interactiveLayer.addEventListener("mousedown", () => {
     }
 });
 function dragCanvas(event){
-    ctx.translate(event.movementX, event.movementY);
-    boardTranslationX += event.movementX;
-    boardTranslationY += event.movementY;
+    camera.move(-event.movementX, -event.movementY);
     redrawCanvas();
 }
 
@@ -97,17 +95,17 @@ interactiveLayer.addEventListener("mouseup", () => {
 interactiveLayer.addEventListener("mousemove", (event) => {updateCoords(event);showPreview(event)});
 function showPreview(event){
     if(isDrawing == true){
-        endX = event.offsetX - boardTranslationX;
-        endY = event.offsetY - boardTranslationY;
+        endX = camera.x + event.offsetX;
+        endY = camera.y + event.offsetY;
         redrawCanvas();
     }
 }
 
 function updateCoords(event){
     let xCoord = document.getElementById("xCoords");
-    xCoord.innerText = "x: " + (event.offsetX - boardTranslationX);
+    xCoord.innerText = "x: " + (camera.x + event.offsetX);
     let yCoord = document.getElementById("yCoords");
-    yCoord.innerText = "y: " + (event.offsetY - boardTranslationY);
+    yCoord.innerText = "y: " + (camera.y + event.offsetY);
 }
 
 document.addEventListener("wheel", updateSelectionWheel, {passive: true});
