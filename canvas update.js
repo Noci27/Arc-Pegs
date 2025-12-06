@@ -1,23 +1,19 @@
 var tickRate = 50/3; //50/3 = 60fps
 // var globTimer = 0;
-let d = new Ball(310, 120, 20);
-const ballInitial = d.getData();
+var camera = null;
+var d = null;
+var ballInitial = null;
 var moveIntervalID;
 var ctrlPressed = false;
 const hotkeyMenu = document.getElementById("hotkeyMenu");
+const materialChangeStuff = document.getElementById("googleMaterialFuckeryWizardry");
 
-//-----Hotkeys-----
+//-----Hotkeys and stuff-----
 //maybe add an overly complicated secret hotkey later
 document.addEventListener("keydown", (e) => {
     switch (e.key){
-        case "s":   //starts simulation
-        case "S":
-            start();    
-        break;
-        
-        case "p":   //pauses simulation
-        case "P":
-            pause();
+        case " ":   //starts/pauses simulation
+            startButton();
         break;
 
         case "d":
@@ -33,6 +29,26 @@ document.addEventListener("keydown", (e) => {
             hardReset();
         break;
 
+        case "ArrowLeft":
+            camera.move(-15, 0);
+            redrawCanvas();
+        break;
+
+        case "ArrowRight":
+            camera.move(15, 0); 
+            redrawCanvas();
+        break;
+        
+        case "ArrowUp":
+            camera.move(0, -15);
+            redrawCanvas();
+        break;
+        
+        case "ArrowDown":
+            camera.move(0, 15);
+            redrawCanvas();
+        break;
+        
         case "Control": //speed up simulation
             clearInterval(moveIntervalID);
             tickRate = 1;
@@ -52,65 +68,67 @@ function speedDown(){
     start();
 }
 
-//-----Most important functions that the game wouldn't work without-----
-function move(){
-    // globTimer++;
-    d.update();
-    redrawCanvas();
-    // d.showPath();
-    // console.log(d.getData());
-}
-
 function openHotkeyMenu(){
     hotkeyMenu.showModal();
 }
 
-function start(){
-    clearInterval(moveIntervalID);  //so it doesn't speed up when pressed again
-    moveIntervalID = setInterval(move, tickRate);   //update the canvas
+function warning(event){
+    event.preventDefault(); //recommended
+    event.returnValue = true;   //legacy support
 }
 
-function pause(){
-    clearInterval(moveIntervalID);
+//-----Camera Object Class-----
+class Camera{
+    constructor(x, y, dx, dy){
+        this.x = typeof(x) === "number" ? x: 0; //part of screen that's shown
+        this.y = typeof(y) === "number" ? y: 0;
+        this.dx = typeof(dx) === "number" ? dx: fldWidth;
+        this.dy = typeof(dy) === "number" ? dy: fldHeight;
+        this.cameraMoveBox = {x: this.dx * 0.2, y: this.dy * 0.3, dx: this.dx * 0.6, dy: this.dy * 0.4, path: new Path2D()};    //rectangle that handles automatic camera movement
+        this.cameraMoveBox.path.rect(this.cameraMoveBox.x, this.cameraMoveBox.y, this.cameraMoveBox.dx, this.cameraMoveBox.dy);
+
+        this.xInitial = this.x;  //const for reset method
+        this.yInitaial = this.y;
+        ctx.translate(-this.x, -this.y);
+    }
+    move(x, y){    //shifts the visible part of screen by specified amount
+        ctx.translate(-x, -y);
+        this.x += x;
+        this.y += y;
+        this.cameraMoveBox.x += x;
+        this.cameraMoveBox.y += y;
+        this.cameraMoveBox.path = new Path2D();   //update path for debugging
+        this.cameraMoveBox.path.rect(this.cameraMoveBox.x, this.cameraMoveBox.y, this.cameraMoveBox.dx, this.cameraMoveBox.dy);
+    }
+    reset(){    //reset all camera transformations
+        this.move(this.xInitial - this.x, this.yInitaial - this.y);
+    }
+    draw(){     //show camera boundaries
+        ctx.lineWidth = 1;
+        ctx.moveTo(this.cameraMoveBox.x, this.cameraMoveBox.y);
+        ctx.strokeStyle = "rgb(29, 128, 102)"
+        ctx.stroke(this.cameraMoveBox.path);
+    }
 }
 
-function softReset(){
-    clearInterval(moveIntervalID);
-    let ball = ballsData[0];    //reset both ball and ballsdata
-    ball.PoX = ballInitial.X;
-    ball.PoY = ballInitial.Y;
-    ball.Vx = ballInitial.XSpeed;
-    ball.Vy = ballInitial.VSpeed;
-    d.PoX = ballInitial.X;
-    d.PoY = ballInitial.Y;
-    d.Vx = ballInitial.XSpeed;
-    d.Vy = ballInitial.VSpeed;
-
-    redrawCanvas();
+//-----Most important functions that the game wouldn't work without-----
+function initializeCanvas(){
+    let width = document.getElementById("canvas-container").scrollWidth;
+    field.width = width;
+    interactiveLayer.width = width;
+    let height = document.getElementById("canvas-container").scrollHeight;
+    field.height = height;
+    interactiveLayer.height = height;
+    fldHeight = height;
+    fldWidth = width;
+    camera = new Camera();
+    d = new Ball(310, 320, 20);
+    ballInitial = d.getData();
 }
-
-function hardReset(){
-    clearInterval(moveIntervalID);
-    let ball = ballsData[0];
-    ball.PoX = ballInitial.X;
-    ball.PoY = ballInitial.Y;
-    ball.Vx = ballInitial.XSpeed;
-    ball.Vy = ballInitial.VSpeed;
-    d.PoX = ballInitial.X;
-    d.PoY = ballInitial.Y;
-    d.Vx = ballInitial.XSpeed;
-    d.Vy = ballInitial.VSpeed;
-    
-    brickData = [];
-    brickCollisionPaths = [];
-    slopeData = [];
-    pegData = [];
-    ballsData.splice(1, ballsData.length - 1);   //delete every but one ball
-    redrawCanvas();
-}
+initializeCanvas();
 
 function redrawCanvas(){
-    ctx.clearRect(0,0,fldWidth,fldHeight);  //clear whole canvas
+    ctx.clearRect(camera.x,camera.y,fldWidth,fldHeight);  //clear screen
     for(const brick of brickData){    //redraw all bricks
         draw(brick);
     }
@@ -134,6 +152,7 @@ function redrawCanvas(){
             case 3:
                 draw({shape: 3, Sx: startX, Sy: startY, Ex: endX, Ey: endY});
             break;
+
             case 4:
                 ctx.beginPath();
                 ctx.arc(endX, endY, 10, 0, 2 * Math.PI);
@@ -141,10 +160,84 @@ function redrawCanvas(){
             break;
         }
     }
+    // camera.draw();
+}
+
+function move(){
+    // globTimer++;
+    d.update();
+    redrawCanvas();
+    // d.showPath();
+    // console.log(d.getData());
+}
+
+//-----Control buttons on the side-----
+function startButton(){
+    if(moveIntervalID){
+        pause();
+        materialChangeStuff.innerHTML = "play_arrow";
+    }
+    else{
+        start();
+        materialChangeStuff.innerHTML = "pause";
+    }
+}
+
+function start(){
+    clearInterval(moveIntervalID);  //so it doesn't speed up when pressed again
+    moveIntervalID = setInterval(move, tickRate);   //update the canvas
+}
+
+function pause(){
+    clearInterval(moveIntervalID);
+    moveIntervalID = 0; //to determine wether or not simulation is running
+}
+
+function softReset(){
+    pause();
+    materialChangeStuff.innerHTML = "play_arrow";
+    let ball = ballsData[0];    //reset both ball and ballsdata
+    ball.PoX = ballInitial.X;
+    ball.PoY = ballInitial.Y;
+    ball.Vx = ballInitial.XSpeed;
+    ball.Vy = ballInitial.VSpeed;
+    d.PoX = ballInitial.X;
+    d.PoY = ballInitial.Y;
+    d.Vx = ballInitial.XSpeed;
+    d.Vy = ballInitial.VSpeed;
+
+    camera.reset();
+    redrawCanvas();
+}
+
+function hardReset(){
+    pause();
+    materialChangeStuff.innerHTML = "play_arrow";
+    let ball = ballsData[0];
+    ball.PoX = ballInitial.X;
+    ball.PoY = ballInitial.Y;
+    ball.Vx = ballInitial.XSpeed;
+    ball.Vy = ballInitial.VSpeed;
+    d.PoX = ballInitial.X;
+    d.PoY = ballInitial.Y;
+    d.Vx = ballInitial.XSpeed;
+    d.Vy = ballInitial.VSpeed;
+    
+    brickData = [];
+    brickCollisionPaths = [];
+    slopeData = [];
+    pegData = [];
+    ballsData.splice(1, ballsData.length - 1);   //delete every but one ball
+
+    camera.reset();
+    redrawCanvas();
+    window.removeEventListener("beforeunload", warning);    //remove listener for better performance and user experience
 }
 
 function getBoard(){
-    console.log(JSON.stringify({balls: ballsData, bricks: brickData, slopes: slopeData, pegs: pegData}, null, "\t"));
+    let board = JSON.stringify({balls: ballsData, bricks: brickData, slopes: slopeData, pegs: pegData}, null, "\t");
+    navigator.clipboard.writeText(board);
+    console.log(board);
 }
 
 function putBoard(board){

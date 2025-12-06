@@ -3,11 +3,48 @@ body, html{
     height: 100%;
     background-color: hsl(0, 0%, 50%);
     overflow: auto;
+    user-select: none;
 }
 
-.canvas-container{
+#canvas-container{
     position: relative;
-    margin: 5px auto;
+    margin: 0;
+}
+.simulation{
+    max-width: 100%;
+    display:grid;
+    grid-template-columns: 3rem 1fr;
+    /* border:3px solid red; */
+}
+
+.simulation-controls{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1em;
+    margin-top: 1rem;
+}
+
+.simulation-controller{ 
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background-color: rgb(255, 187, 0);
+    border: 3px ridge rgb(200, 110, 0);
+}
+
+.hotkey-info-button{
+    width: 2rem;
+    height: 2rem;
+    color:white;
+    background-color: rgb(140, 184, 235);
+    border: 2px solid rgb(88, 122, 159);
+    border-radius: 50%;
+    outline: none;
+}
+
+.draw-mode-controls{
+    padding: 0.5rem;
 }
 
 #field{
@@ -19,8 +56,8 @@ body, html{
 
 .coordinates{
     position: absolute;
-    left: 4rem;
-    top: 1rem;
+    left: 2%;
+    top: 2%;
 }
 
 .coordinates > p{
@@ -29,12 +66,9 @@ body, html{
 }
 
 #interactiveLayer{
-    width: 1400px;
-    height: 600px;
     position: absolute;
     left: 50%;
     transform: translate(-50%, 0);
-    user-select: none;
     z-index: 2;
     /* background-color: hsla(0, 0%, 10%, 0.3); */
 }
@@ -58,7 +92,6 @@ body, html{
     width: 3rem;
     height: 3rem;
     position: absolute;
-    user-select: none;
 }
 
 #selectionWheel img:nth-child(2){
@@ -77,21 +110,10 @@ p{
     font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
 }
 
-.controls{
-    width: 95%;
-    margin: auto;
-    display:grid;
-    grid-template-columns: 1fr 2fr;
-    gap:1em;
-    /* border:3px solid red; */
-}
-
-.simulation-controls{
-    border-right: 2px dotted black;
-}
-
 button{
     height: 2em;
+    cursor: pointer;
+    padding: 1px 0;
 }
 
 #activeText{
@@ -121,19 +143,4 @@ button{
 
 [type=radio]:checked + img {
     outline: 2px solid #f00;
-}
-
-.hotkey-info-button{
-    position: fixed;
-    right: 0.5rem;
-    top: 0.5rem;
-    width: 2em;
-    height: 2em;
-    color:white;
-    font-weight: 700;
-    background-color: rgb(140, 184, 235);
-    border: 2px solid rgb(88, 122, 159);
-    border-radius: 50%;
-    cursor: pointer;
-    outline: none;
 }

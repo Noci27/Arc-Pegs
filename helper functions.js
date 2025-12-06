@@ -13,9 +13,52 @@ function normal(Vx, Vy){    //returns an array containing the components of a no
     return [normX, normY];
 }
 
+function unit(Vx, Vy){  //returns the unit vector of a given vector
+    let length = Math.hypot(Vx, Vy);
+    if(length == 0){
+        return "Not a valid vector";
+    }
+    else{
+        return [Vx / length, Vy / length];
+    }
+}
+
+//returns an object if both lines intersect each other, false otherwise
+//just read the last few lines I can't explain it short enough for there to not be any word wrap
+//syntax: line = [[x, y], [x, y]]
+function areCrossing(line1, line2){
+    let aa = line1[1][0] - line1[0][0];
+    if(aa == 0){
+        aa = 0.001;
+    }
+    let ab = line2[0][0] - line2[1][0];
+    let ba = line1[1][1] - line1[0][1];
+    let bb = line2[0][1] - line2[1][1];
+    if(bb == 0){
+        bb = 0.001;
+    }
+    let r = line2[0][0] - line1[0][0];
+    let s = line2[0][1] - line1[0][1];
+
+    ab /= aa;
+    r /= aa;
+    bb -= ba * ab;
+    s -= ba * r;
+    s /= bb;
+    r -= ab * s;
+
+    if(s >= 0 && s <= 1 && r >= 0 && r <= 1){
+        return {line1: r, line2: s};
+    }
+    else{
+        return false;
+    }
+}
+
 //-----Miscellaneous helper functions-----
 
 //returns true if the given shapes overlap (Using SAT; NO circles, use next function for that), S1 and S2 are SORTED(!) arrays of vertices
+//syntax: S1/2 = [[x, y], [x, y], ...]
 function checkOverlap(S1, S2){
     if(S1.length < 2 || !S1 || S2.length < 2|| !S2){   //return if empty or only 1 vertex
         return false;
@@ -158,4 +201,34 @@ function checkOverlapCircle(C, NC){
         return false;
     }
     return true;
+}
+
+//returns true if point is within the container
+//syntax: point = {x:..., y:...}, container = [[x, y], ...] (points must be in order)
+function contains(point, container){
+    let numOfVertices = container.length;
+    if(numOfVertices < 3){  //checks if container is a simple polygon
+        return false;
+    }
+    let intersections = 0;
+    for(let i = 0; i < numOfVertices; i++){
+        if(point.y == container[i][1]){ //if line goes through vertex/vertices
+            let offsetNext = Math.sign(point.y - container[(i+1)%numOfVertices][1]);
+            let offsetPrev = Math.sign(point.y - container[(i-1+numOfVertices)%numOfVertices][1]);
+            if(offsetNext == offsetPrev || offsetNext == 0){
+                intersections++;
+            }
+        }
+        else{
+            if(areCrossing([[point.x, point.y],[Number.MAX_SAFE_INTEGER, point.y]], [container[i],container[(i+1)%numOfVertices]])){
+                intersections++;
+            }
+        }
+    }
+    if(intersections % 2 != 0){ //even-odd rule
+        return true;
+    }
+    else{
+        return false;
+    }
 }

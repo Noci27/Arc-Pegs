@@ -1,7 +1,7 @@
 var isActive = false;
 var startX, startY, endX, endY;
 var isDrawing = false;
-var selectedShape = 0;
+var selectedShape = 2;
 const activeText = document.getElementById("activeText");
 const assets = document.getElementsByName("shape");
 const radioImages = document.querySelectorAll("[type=radio] + img");
@@ -43,13 +43,24 @@ function updateSelected(shape){     //used when clicking on radio images
 interactiveLayer.addEventListener("mousedown", startPreview);
 function startPreview(event){
     if(isActive == true){
-        startX = event.offsetX;
-        startY = event.offsetY;
+        startX = camera.x + event.offsetX;
+        startY = camera.y + event.offsetY;
         endX = startX;  //so you don't get wrong previews on press
         endY = startY;
         isDrawing = true;   //is currently drawing
         redrawCanvas();
     }
+}
+
+interactiveLayer.addEventListener("mousedown", () => {
+    if(!isActive){
+        interactiveLayer.addEventListener("mousemove", dragCanvas);
+        document.addEventListener("mouseup", () => {interactiveLayer.removeEventListener("mousemove", dragCanvas)});
+    }
+});
+function dragCanvas(event){
+    camera.move(-event.movementX, -event.movementY);
+    redrawCanvas();
 }
 
 interactiveLayer.addEventListener("mouseup", () => {
@@ -79,15 +90,25 @@ interactiveLayer.addEventListener("mouseup", () => {
         }
         isDrawing = false;
     }
+    if(brickData.concat(pegData, slopeData)[0]){   //add listener to prevent losing levels
+        window.addEventListener("beforeunload", warning);
+    }
 })
 
-interactiveLayer.addEventListener("mousemove", showPreview);
+interactiveLayer.addEventListener("mousemove", (event) => {updateCoords(event);showPreview(event)});
 function showPreview(event){
     if(isDrawing == true){
-        endX = event.offsetX;
-        endY = event.offsetY;
+        endX = camera.x + event.offsetX;
+        endY = camera.y + event.offsetY;
         redrawCanvas();
     }
+}
+
+function updateCoords(event){
+    let xCoord = document.getElementById("xCoords");
+    xCoord.innerText = "x: " + (camera.x + event.offsetX);
+    let yCoord = document.getElementById("yCoords");
+    yCoord.innerText = "y: " + (camera.y + event.offsetY);
 }
 
 document.addEventListener("wheel", updateSelectionWheel, {passive: true});
@@ -112,12 +133,4 @@ function shrink(){
         selectionWheel.animate(selectionWheelGrow, {duration: 100, fill: "forwards", direction: "reverse"});
         grown = false;
     }
-}
-
-interactiveLayer.addEventListener("mousemove", updateCoords);  //coordinats at the top
-function updateCoords(event){
-    let xCoord = document.getElementById("xCoords");
-    xCoord.innerText = "x: " + event.offsetX;
-    let yCoord = document.getElementById("yCoords");
-    yCoord.innerText = "y: " + event.offsetY;
 }
