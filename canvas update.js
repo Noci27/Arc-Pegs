@@ -72,6 +72,11 @@ function openHotkeyMenu(){
     hotkeyMenu.showModal();
 }
 
+function warning(event){
+    event.preventDefault(); //recommended
+    event.returnValue = true;   //legacy support
+}
+
 //-----Camera Object Class-----
 class Camera{
     constructor(x, y, dx, dy){
@@ -226,6 +231,7 @@ function hardReset(){
 
     camera.reset();
     redrawCanvas();
+    window.removeEventListener("beforeunload", warning);    //remove listener for better performance and user experience
 }
 
 function getBoard(){

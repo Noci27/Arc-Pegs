@@ -13,7 +13,18 @@ function normal(Vx, Vy){    //returns an array containing the components of a no
     return [normX, normY];
 }
 
-//returns true if both lines intersect each other
+function unit(Vx, Vy){  //returns the unit vector of a given vector
+    let length = Math.hypot(Vx, Vy);
+    if(length == 0){
+        return "Not a valid vector";
+    }
+    else{
+        return [Vx / length, Vy / length];
+    }
+}
+
+//returns an object if both lines intersect each other, false otherwise
+//just read the last few lines I can't explain it short enough for there to not be any word wrap
 //syntax: line = [[x, y], [x, y]]
 function areCrossing(line1, line2){
     let aa = line1[1][0] - line1[0][0];
@@ -37,7 +48,7 @@ function areCrossing(line1, line2){
     r -= ab * s;
 
     if(s >= 0 && s <= 1 && r >= 0 && r <= 1){
-        return true;
+        return {line1: r, line2: s};
     }
     else{
         return false;
@@ -47,6 +58,7 @@ function areCrossing(line1, line2){
 //-----Miscellaneous helper functions-----
 
 //returns true if the given shapes overlap (Using SAT; NO circles, use next function for that), S1 and S2 are SORTED(!) arrays of vertices
+//syntax: S1/2 = [[x, y], [x, y], ...]
 function checkOverlap(S1, S2){
     if(S1.length < 2 || !S1 || S2.length < 2|| !S2){   //return if empty or only 1 vertex
         return false;

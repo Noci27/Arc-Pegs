@@ -29,22 +29,30 @@ class Ball{
         let unmovedDist = 1;  //fraction of remaining movement
         let nPoY = this.PoY + this.Vy;  //next intended position
         let nPoX = this.PoX + this.Vx;
+        let movebox = this.getData().MoveBox;   //bounding box of movement
+
         //-----Peg Collision-----
         for(let peg of pegData){
-            let distance = Math.hypot((nPoX - peg.x), (nPoY - peg.y));
-            if(distance < this.radus + peg.r){
-                let translationX = (nPoX - peg.x) * (this.radus + peg.r - distance) / distance;
-                let translationY = (nPoY - peg.y) * (this.radus + peg.r - distance) / distance;
-                this.PoX += this.Vx + translationX;   //move outside of peg
-                this.PoY += this.Vy + translationY;
-                translationX /= (this.radus + peg.r - distance); //normalize vector
-                translationY /= (this.radus + peg.r - distance);
-                let scalar = 2 * friction * dotP(this.Vx, this.Vy, translationX, translationY); //mirror moving vector
-                this.Vx -= scalar * translationX;
-                this.Vy -= scalar * translationY;
+            if(checkOverlapCircle([peg.x, peg.y, peg.r], movebox)){
+                let [unitX, unitY] = unit(this.Vx, this.Vy);
+                let [normalX, normalY] = normal(this.Vx, this.Vy);
+                let distToMovement = dotP(normalX, normalY, this.PoX - peg.x, this.PoY - peg.y);    //it's always the distance between the two center points projected onto the normal vector
+                normalX *= distToMovement;  //scale normal vector to reach the movement line
+                normalY *= distToMovement; 
+                let distToCollision = Math.sqrt(Math.pow(this.radus + peg.r, 2) - Math.pow(distToMovement, 2));
+                let translationX = normalX - distToCollision * unitX;
+                let translationY = normalY - distToCollision * unitY;
+                this.PoX = peg.x + translationX;
+                this.PoY = peg.y + translationY;
+
+                let [mirrorX, mirrorY] = unit(peg.x - this.PoX, peg.y - this.PoY);  //mirror speed vector
+                let scalar = 2 * friction * dotP(this.Vx, this.Vy, mirrorX, mirrorY);
+                this.Vx -= scalar * mirrorX;
+                this.Vy -= scalar * mirrorY;
                 unmovedDist = 0;
                 nPoX = this.PoX;
                 nPoY = this.PoY;
+                break;  //so only one collision happens per tick
             }
         }
 
@@ -121,41 +129,33 @@ class Ball{
             }
         }
         
-        //-----Spaghetti Block Collision Take 3-----
-        for(const path of brickData){ //+ 0.5 * this.radus so corners work
-            let dx, dy = 0;
-            if(nPoY > path.TLCornerY - this.radus && nPoY < path.TLCornerY + path.dy + this.radus){ //hit vertical side
-                let rightSideVariable = 0;  //used as width if hit right side
-                if(Math.sign(this.Vx) == 1){    //left or right side
-                    dx = path.TLCornerX - (nPoX + this.radus);
+        //-----Spaghetti Block Collision Take 4-----
+        for(const path of brickData){
+            let brick = [[path.x, path.y],[path.x + path.dx, path.y],[path.x + path.dx, path.y + path.dy],[path.x, path.y + path.dy]];
+            if(checkOverlap(brick, movebox)){
+                let marginBox = [[path.x - this.radus, path.y - this.radus], [path.x + path.dx + this.radus, path.y - this.radus], [path.x + path.dx + this.radus, path.y + path.dy + this.radus], [path.x - this.radus, path.y + path.dy + this.radus]];
+                let minDist = Number.MAX_SAFE_INTEGER;
+                let minDistID = 4;
+                for(let i = 0; i < 4; i++){ //find side of impact
+                    let dist = areCrossing([[this.PoX, this.PoY],[this.PoX+this.Vx, this.PoY+this.Vy]],[marginBox[i], marginBox[(i+1)%4]]).line1;
+                    if(dist >= 0 && dist < minDist){
+                        minDist = dist;
+                        minDistID = i;
+                    } 
+                }
+                this.PoX += minDist * this.Vx;  //move to point of impact
+                this.PoY += minDist * this.Vy;
+                console.log(this.Vy)
+                if(Math.abs(this.Vy) < 2 * gravity){  //stick to floor if speed too low
+                    this.Vy = 0;
                 }
                 else{
-                    dx = nPoX - this.radus - (path.TLCornerX + path.dx);
-                    rightSideVariable = path.dx;
+                    let [normalX, normalY] = normal(marginBox[(minDistID + 1)%4][0] - marginBox[minDistID][0], marginBox[(minDistID + 1)%4][1] - marginBox[minDistID][1]);
+                    let scalar = 2 * friction * dotP(this.Vx, this.Vy, normalX, normalY);  //mirror moving vector + dampening
+                    this.Vx -= scalar * normalX;    //translate vector correct way
+                    this.Vy -= scalar * normalY;
                 }
-                if(dx < 0 && dx > -this.radus){
-                    this.PoX = path.TLCornerX + rightSideVariable - this.radus * Math.sign(this.Vx);
-                    this.Vx *= -1;
-                }
-            }
-            if(nPoX > path.TLCornerX - this.radus && nPoX < path.TLCornerX + path.dx + this.radus){ //hit horizontal side
-                let bottomSideVariable = 0; //used as height if bottom side is hit
-                if(Math.sign(this.Vy) == 1){    //top or bottom side
-                    dy = path.TLCornerY - (nPoY + this.radus);
-                }
-                else{
-                    dy = nPoY - this.radus - (path.TLCornerY + path.dy) ;
-                    bottomSideVariable = path.dy;
-                }
-                if(dy < 0 && dy > -this.radus){
-                    this.PoY = path.TLCornerY + bottomSideVariable - this.radus * Math.sign(this.Vy);   //set position outiside of block
-                    if(bottomSideVariable == 0 && Math.abs(this.Vy) < 1){    //stick if hit top side and speed is low enough
-                        this.Vy = 0;
-                    }
-                    else{
-                        this.Vy = this.Vy * -friction + gravity;
-                    }
-                }
+                unmovedDist -= minDist;
             }
         }
         
@@ -195,7 +195,7 @@ class Ball{
         ballsData[0] = circle;  //update info in ballsData
     }
     showPath(){
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 2;  //line
         ctx.strokeStyle = "red";
         ctx.beginPath();
         ctx.moveTo(this.PoX, this.PoY);
@@ -205,9 +205,29 @@ class Ball{
         ctx.beginPath();
         ctx.arc(this.PoX + this.Vx, this.PoY + this.Vy, this.radus, 0 , 2 * Math.PI);
         ctx.stroke();
+
+        ctx.strokeStyle = "orange";
+        let cornerX = this.PoX - this.radus;
+        ctx.translate(this.PoX, this.PoY);
+        ctx.rotate(Math.acos(this.Vy / this.HSpeed) * (this.Vx < 0 ? 1:-1));
+        ctx.translate(-this.PoX, -this.PoY);
+        ctx.strokeRect(cornerX, this.PoY, 2 * this.radus * ((cornerX > this.PoX) ? -1:1), this.HSpeed + this.radus);
+        ctx.setTransform(1, 0, 0, 1, -camera.x, -camera.y);
     }
     getData(){
-        let data = {X: this.PoX, Y: this.PoY, VSpeed: this.Vy, XSpeed:this.Vx, HSpeed: this.HSpeed};
+        let [movingNormalX, movingNormalY] = normal(this.Vx, this.Vy);  //normal to speed vector
+        let moveBox = new Array;
+        for(let i = 0; i < 2; i++){
+            for(let j = -1; j < 2; j += 2){
+                let cornerX = this.PoX + i * ((this.HSpeed + this.radus) * movingNormalY) + j * (this.radus * movingNormalX);
+                let cornerY = this.PoY + i * ((this.HSpeed + this.radus) * movingNormalX * -1) + j * (this.radus * movingNormalY);
+                moveBox.push([cornerX, cornerY]);
+            }
+            if(i == 0){ //switch two of the corners so the array's sorted correctly
+                moveBox.reverse();
+            }
+        }   
+        let data = {X: this.PoX, Y: this.PoY, VSpeed: this.Vy, XSpeed:this.Vx, HSpeed: this.HSpeed, MoveBox: moveBox};
         return data;
     }
 }
@@ -218,7 +238,7 @@ class Brick{
         this.Cy = y;
         this.width = width;
         this.height = height;
-        var rectangle = {shape: 2, TLCornerX: this.Cx, TLCornerY: this.Cy, dx: this.width, dy: this.height, color: Math.floor(Math.random() * 360)};
+        var rectangle = {shape: 2, x: this.Cx, y: this.Cy, dx: this.width, dy: this.height, color: Math.floor(Math.random() * 360)};
         draw(rectangle);
         brickData.push(rectangle);
     }
@@ -254,7 +274,7 @@ function draw(data){
     //always have the ID of the shape in the input -> {shape: n, ...}
     //Shapes:
     //1 = Circle -> {PosX, PosY, rad}
-    //2 = Rectangle -> {TLCornerX, TLCornerY, dx, dy, color}
+    //2 = Rectangle -> {x, y, dx, dy, color}
     //3 = Line -> {Sx, Sy, Ex, Ey, color}
     //4 = Peg -> {x, y, r}
 
@@ -277,7 +297,7 @@ function draw(data){
         }
 
         case 2:{
-            let {TLCornerX: x, TLCornerY: y, dx: width, dy: height, color: color} = data;
+            let {x: x, y: y, dx: width, dy: height, color: color} = data;
             let grad = ctx.createLinearGradient(x, y, x + width, y); 
             grad.addColorStop(0.1, "white");
             grad.addColorStop(1, `hsl(${color}, 87%, 50%)`); //random hue 

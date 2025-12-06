@@ -90,6 +90,9 @@ interactiveLayer.addEventListener("mouseup", () => {
         }
         isDrawing = false;
     }
+    if(brickData.concat(pegData, slopeData)[0]){   //add listener to prevent losing levels
+        window.addEventListener("beforeunload", warning);
+    }
 })
 
 interactiveLayer.addEventListener("mousemove", (event) => {updateCoords(event);showPreview(event)});
