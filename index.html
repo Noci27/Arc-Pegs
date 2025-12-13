@@ -22,12 +22,12 @@
             <abbr title="Prints all relevant information in the console in JSON for easy copying"><button class="simulation-controller" onclick="getBoard()"><i class="material-symbols-outlined">taunt</i></button></abbr>
         </div>
         <div id="canvas-container">
-            <canvas id="interactiveLayer" width="1400" height="600"></canvas>
+            <canvas id="drawLayer" width="1400" height="600"></canvas>
             <div class="coordinates">
                 <p id="xCoords">x: 0</p>
                 <p id="yCoords">y: 0</p>
             </div>
-            <canvas id="field" width="1400" height="600">
+            <canvas id="gameplayLayer" width="1400" height="600">
                 <h1>Your browser does not support HTML Canvas (how old is your device??), no game for you :(</h1>
             </canvas>
             <div id="selectionWheel">
@@ -35,12 +35,15 @@
                  <img src="Assets/line.png" alt="Line" draggable="false">
                  <img src="Assets/peg.png" alt="Peg" draggable="false">
             </div>
+            <div id="editLayer">
+            </div>
         </div>
     </div>
     <div class="draw-mode-controls">
         <button onclick="toggleDraw()">Draw mode</button>
-        <p>Draw Mode is currently</p>
-        <p id="activeText">not active</p>
+        <button onclick="toggleEdit()">Edit mode</button>
+        <p>Active mode:</p>
+        <p id="activeText">none</p>
         <div class="shapes">
             <label>
                 <input type="radio" name="shape" value="2" onclick="updateSelected(2)" disabled>
@@ -60,7 +63,8 @@
         <h2>Hotkeys</h2>
         <ul>
             <li><strong>Space</strong> - Start/Resume</li>
-            <li><strong>D</strong> - Toggle Draw Mode</li>
+            <li><strong>1</strong> - Toggle Draw Mode</li>
+            <li><strong>2</strong> - Toggle Edit Mode</li>
             <li><strong>Scroll</strong> - Switch Draw Object</li>
             <li><strong>Ctrl</strong> - Speed up</li>
             <li><strong>R</strong> - Soft Reset</li>

@@ -16,11 +16,6 @@ document.addEventListener("keydown", (e) => {
             startButton();
         break;
 
-        case "d":
-        case "D":
-            toggleDraw();
-        break;
-
         case "r":
             softReset();
         break;
@@ -54,6 +49,14 @@ document.addEventListener("keydown", (e) => {
             tickRate = 1;
             ctrlPressed = true;
             start();
+        break;
+
+        case "1":   //enter draw mode
+            toggleDraw();
+        break;
+
+        case "2":   //enter edit mode
+            toggleEdit();
         break;
         default:
             // console.log(e.key);
@@ -115,10 +118,10 @@ class Camera{
 function initializeCanvas(){
     let width = document.getElementById("canvas-container").scrollWidth;
     field.width = width;
-    interactiveLayer.width = width;
+    drawLayer.width = width;
     let height = document.getElementById("canvas-container").scrollHeight;
     field.height = height;
-    interactiveLayer.height = height;
+    drawLayer.height = height;
     fldHeight = height;
     fldWidth = width;
     camera = new Camera();

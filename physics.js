@@ -1,7 +1,7 @@
-const field = document.getElementById("field");     //gameplay layer
+const field = document.getElementById("gameplayLayer");     //gameplay layer
 const ctx = field.getContext("2d"); //gives tools for drawing
-const interactiveLayer = document.getElementById("interactiveLayer");   //for UI and stuff
-const interactiveLayerCtx = interactiveLayer.getContext("2d");
+const drawLayer = document.getElementById("drawLayer");   //for UI and stuff
+const drawLayerCtx = drawLayer.getContext("2d");
 var fldWidth = field.width; //need to be var for varied screen sizes
 var fldHeight = field.height;
 const gravity = 1.5;
@@ -238,9 +238,23 @@ class Brick{
         this.Cy = y;
         this.width = width;
         this.height = height;
-        var rectangle = {shape: 2, x: this.Cx, y: this.Cy, dx: this.width, dy: this.height, color: Math.floor(Math.random() * 360)};
+        this.id = Date.now();
+        var rectangle = {shape: 2, x: this.Cx, y: this.Cy, dx: this.width, dy: this.height, color: Math.floor(Math.random() * 360), id: this.id};
         draw(rectangle);
         brickData.push(rectangle);
+
+        let dragObejct = document.createElement("div");
+        dragObejct.style.width = `${this.width}px`;
+        dragObejct.style.height = `${this.height}px`;
+        dragObejct.style.left = `${this.Cx - camera.x}px`;
+        dragObejct.style.top = `${this.Cy - camera.y}px`;
+        dropbox.appendChild(dragObejct);
+        dragObejct.draggable = "true";
+        dragObejct.className = "dragObject";
+        dragObejct.id = this.id;
+        dragObejct.addEventListener("mousedown", getMouseOffset);
+        dragObejct.addEventListener("dragend", dragElement);
+        dragObjects.push(dragObejct);
     }
 }
 
