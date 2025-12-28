@@ -200,12 +200,12 @@ function softReset(){
     pause();
     materialChangeStuff.innerHTML = "play_arrow";
     let ball = ballsData[0];    //reset both ball and ballsdata
-    ball.PoX = ballInitial.X;
-    ball.PoY = ballInitial.Y;
+    ball.x = ballInitial.X;
+    ball.y = ballInitial.Y;
     ball.Vx = ballInitial.XSpeed;
     ball.Vy = ballInitial.VSpeed;
-    d.PoX = ballInitial.X;
-    d.PoY = ballInitial.Y;
+    d.x = ballInitial.X;
+    d.y = ballInitial.Y;
     d.Vx = ballInitial.XSpeed;
     d.Vy = ballInitial.VSpeed;
 
@@ -217,12 +217,12 @@ function hardReset(){
     pause();
     materialChangeStuff.innerHTML = "play_arrow";
     let ball = ballsData[0];
-    ball.PoX = ballInitial.X;
-    ball.PoY = ballInitial.Y;
+    ball.x = ballInitial.X;
+    ball.y = ballInitial.Y;
     ball.Vx = ballInitial.XSpeed;
     ball.Vy = ballInitial.VSpeed;
-    d.PoX = ballInitial.X;
-    d.PoY = ballInitial.Y;
+    d.x = ballInitial.X;
+    d.y = ballInitial.Y;
     d.Vx = ballInitial.XSpeed;
     d.Vy = ballInitial.VSpeed;
     

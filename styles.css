@@ -7,6 +7,11 @@ body, html{
     overflow: hidden;
 }
 
+body{
+    display: flex;
+    flex-direction: column;
+}
+
 #canvas-container{
     position: relative;
     margin: 0;
@@ -16,6 +21,7 @@ body, html{
     max-width: 100%;
     display:grid;
     grid-template-columns: 3rem 1fr;
+    flex-grow: 1;
     /* border:3px solid red; */
 }
 
@@ -131,20 +137,18 @@ button{
     opacity: 0;
     width: 0;
     height: 0;
-}
-
-[type=radio] + img{
-    width: 3em;
-    height: 3em;
-    border: 3px solid black;
-    border-radius: 5px;
-    cursor: pointer;
-    background-color: hsl(0, 0%, 30%);
-    opacity: 0.5;
-}
-
-[type=radio]:checked + img {
-    outline: 2px solid #f00;
+    & + img{
+        width: 3em;
+        height: 3em;
+        border: 3px solid black;
+        border-radius: 5px;
+        cursor: pointer;
+        background-color: hsl(0, 0%, 30%);
+        opacity: 0.5;
+    }
+    &:checked + img{
+        outline: 2px solid #f00;
+    }
 }
 
 #editLayer{
@@ -159,8 +163,13 @@ button{
 
 .dragObject{
     position: absolute;
-    &:active{
+    transform-origin: top left;
+    &:hover{
         background-color: hsla(0, 0%, 20%, 0.5);
-        cursor: move;
+        cursor: pointer;
     }
+}
+
+.roundDragElement{
+    border-radius: 50%;
 }

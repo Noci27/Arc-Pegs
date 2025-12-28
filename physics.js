@@ -13,22 +13,33 @@ var pegData = new Array;    //holds info about Pegs
 
 class Ball{
     constructor(x, y, radius){
-        this.PoX = x;
-        this.PoY = y;
+        this.x = x;
+        this.y = y;
         this.radus = radius;
         this.Vx = 0;
         this.Vy = 0;
         this.HSpeed = Math.hypot(this.Vx, this.Vy);
         this.rot = 0;
-        var circle = {shape: 1, PoX: this.PoX, PoY: this.PoY, Vx: this.Vx, Vy: this.Vy, rad: this.radus, rot: this.rot};
-
+        this.id = Date.now();
+        var circle = {shape: 1, x: this.x, y: this.y, Vx: this.Vx, Vy: this.Vy, rad: this.radus, rot: this.rot, id: this.id};
         draw(circle);
         ballsData.push(circle);
+
+        let dragObejct = document.createElement("div");
+        dragObejct.style.width = `${2 * this.radus}px`;
+        dragObejct.style.height = `${2 * this.radus}px`;
+        dragObejct.style.left = `${this.x - this.radus - camera.x}px`;
+        dragObejct.style.top = `${this.y - this.radus - camera.y}px`;
+        dropbox.appendChild(dragObejct);
+        dragObejct.className = "dragObject roundDragElement";
+        dragObejct.id = this.id;
+        dragObejct.addEventListener("mousedown", getMouseOffset);
+        dragObjects.push(dragObejct);
     }
     update(){      
         let unmovedDist = 1;  //fraction of remaining movement
-        let nPoY = this.PoY + this.Vy;  //next intended position
-        let nPoX = this.PoX + this.Vx;
+        let nPoY = this.y + this.Vy;  //next intended position
+        let nPoX = this.x + this.Vx;
         let movebox = this.getData().MoveBox;   //bounding box of movement
 
         //-----Peg Collision-----
@@ -36,22 +47,22 @@ class Ball{
             if(checkOverlapCircle([peg.x, peg.y, peg.r], movebox)){
                 let [unitX, unitY] = unit(this.Vx, this.Vy);
                 let [normalX, normalY] = normal(this.Vx, this.Vy);
-                let distToMovement = dotP(normalX, normalY, this.PoX - peg.x, this.PoY - peg.y);    //it's always the distance between the two center points projected onto the normal vector
+                let distToMovement = dotP(normalX, normalY, this.x - peg.x, this.y - peg.y);    //it's always the distance between the two center points projected onto the normal vector
                 normalX *= distToMovement;  //scale normal vector to reach the movement line
                 normalY *= distToMovement; 
                 let distToCollision = Math.sqrt(Math.pow(this.radus + peg.r, 2) - Math.pow(distToMovement, 2));
                 let translationX = normalX - distToCollision * unitX;
                 let translationY = normalY - distToCollision * unitY;
-                this.PoX = peg.x + translationX;
-                this.PoY = peg.y + translationY;
+                this.x = peg.x + translationX;
+                this.y = peg.y + translationY;
 
-                let [mirrorX, mirrorY] = unit(peg.x - this.PoX, peg.y - this.PoY);  //mirror speed vector
+                let [mirrorX, mirrorY] = unit(peg.x - this.x, peg.y - this.y);  //mirror speed vector
                 let scalar = 2 * friction * dotP(this.Vx, this.Vy, mirrorX, mirrorY);
                 this.Vx -= scalar * mirrorX;
                 this.Vy -= scalar * mirrorY;
                 unmovedDist = 0;
-                nPoX = this.PoX;
-                nPoY = this.PoY;
+                nPoX = this.x;
+                nPoY = this.y;
                 break;  //so only one collision happens per tick
             }
         }
@@ -76,8 +87,8 @@ class Ball{
                         ba = 0.01;
                     }
                     let bb = -(ey-sy);
-                    let t = sx - (this.PoX + this.radus * Math.sign(scalar) * normalX); //adding radius of ball
-                    let r = sy - (this.PoY + this.radus * Math.sign(scalar) * normalY);
+                    let t = sx - (this.x + this.radus * Math.sign(scalar) * normalX); //adding radius of ball
+                    let r = sy - (this.y + this.radus * Math.sign(scalar) * normalY);
     
                     aa /= ab;
                     t /= ab;
@@ -86,8 +97,8 @@ class Ball{
                     r /= ba;
 
                     if(r < -0.5){  //happens when hitting edges
-                        let dist1 = Math.hypot((this.PoX - sx), (this.PoY - sy));
-                        let dist2 = Math.hypot((this.PoX - ex), (this.PoY - ey));
+                        let dist1 = Math.hypot((this.x - sx), (this.y - sy));
+                        let dist2 = Math.hypot((this.x - ex), (this.y - ey));
                         let [unnormalX, unnormalY] = normal(normalX, normalY);  //bounces off other side
                         scalar = 2 * friction * dotP(this.Vx, this.Vy, unnormalX, unnormalY);
                         aa = normalX;
@@ -100,8 +111,8 @@ class Ball{
                             ba = 0.01;
                         }                    
                         bb = -this.Vy;
-                        t = this.PoX - ((dist1 < dist2 ? sx: ex) - this.radus * unnormalX * Math.sign(scalar));
-                        r = this.PoY - ((dist1 < dist2 ? sy: ey) - this.radus * unnormalY * Math.sign(scalar));
+                        t = this.x - ((dist1 < dist2 ? sx: ex) - this.radus * unnormalX * Math.sign(scalar));
+                        r = this.y - ((dist1 < dist2 ? sy: ey) - this.radus * unnormalY * Math.sign(scalar));
 
                         aa /= ab;
                         t /= ab;
@@ -109,16 +120,16 @@ class Ball{
                         r -= bb * t;
                         r /= ba;
 
-                        this.PoX = (dist1 < dist2 ? sx: ex) - this.radus * unnormalX * Math.sign(scalar) + r * normalX; //move back onto initial path
-                        this.PoY = (dist1 < dist2 ? sy: ey) - this.radus * unnormalY * Math.sign(scalar) + r * normalY;
+                        this.x = (dist1 < dist2 ? sx: ex) - this.radus * unnormalX * Math.sign(scalar) + r * normalX; //move back onto initial path
+                        this.y = (dist1 < dist2 ? sy: ey) - this.radus * unnormalY * Math.sign(scalar) + r * normalY;
                         unmovedDist = 0;
                         this.Vx -= scalar * unnormalX;    //translate vector correct way
                         this.Vy -= scalar * unnormalY;    
                         break;                    
                     }
     
-                    this.PoX += r * this.Vx * unmovedDist;    //go to point of impact
-                    this.PoY += r * this.Vy * unmovedDist;
+                    this.x += r * this.Vx * unmovedDist;    //go to point of impact
+                    this.y += r * this.Vy * unmovedDist;
                     unmovedDist -= Math.hypot(r * this.Vx * unmovedDist, r * this.Vy * unmovedDist) / this.HSpeed;    //fraction of moved distance
     
                     this.Vx -= scalar * normalX;    //translate vector correct way
@@ -137,14 +148,14 @@ class Ball{
                 let minDist = Number.MAX_SAFE_INTEGER;
                 let minDistID = 4;
                 for(let i = 0; i < 4; i++){ //find side of impact
-                    let dist = areCrossing([[this.PoX, this.PoY],[this.PoX+this.Vx, this.PoY+this.Vy]],[marginBox[i], marginBox[(i+1)%4]]).line1;
+                    let dist = areCrossing([[this.x, this.y],[this.x+this.Vx, this.y+this.Vy]],[marginBox[i], marginBox[(i+1)%4]]).line1;
                     if(dist >= 0 && dist < minDist){
                         minDist = dist;
                         minDistID = i;
                     } 
                 }
-                this.PoX += minDist * this.Vx;  //move to point of impact
-                this.PoY += minDist * this.Vy;
+                this.x += minDist * this.Vx;  //move to point of impact
+                this.y += minDist * this.Vy;
                 console.log(this.Vy)
                 if(Math.abs(this.Vy) < 2 * gravity){  //stick to floor if speed too low
                     this.Vy = 0;
@@ -159,13 +170,13 @@ class Ball{
             }
         }
         
-        this.PoX += unmovedDist * this.Vx;    //move ball
-        this.PoY += unmovedDist * this.Vy;
+        this.x += unmovedDist * this.Vx;    //move ball
+        this.y += unmovedDist * this.Vy;
         
         //-----Camera-----
-        if(!contains({x: this.PoX, y: this.PoY}, [[camera.cameraMoveBox.x, camera.cameraMoveBox.y], [camera.cameraMoveBox.x + camera.cameraMoveBox.dx, camera.cameraMoveBox.y], [camera.cameraMoveBox.x + camera.cameraMoveBox.dx, camera.cameraMoveBox.y + camera.cameraMoveBox.dy], [camera.cameraMoveBox.x, camera.cameraMoveBox.y + camera.cameraMoveBox.dy]])){
-            let distX = camera.cameraMoveBox.x - this.PoX;
-            let distY = camera.cameraMoveBox.y - this.PoY;
+        if(!contains({x: this.x, y: this.y}, [[camera.cameraMoveBox.x, camera.cameraMoveBox.y], [camera.cameraMoveBox.x + camera.cameraMoveBox.dx, camera.cameraMoveBox.y], [camera.cameraMoveBox.x + camera.cameraMoveBox.dx, camera.cameraMoveBox.y + camera.cameraMoveBox.dy], [camera.cameraMoveBox.x, camera.cameraMoveBox.y + camera.cameraMoveBox.dy]])){
+            let distX = camera.cameraMoveBox.x - this.x;
+            let distY = camera.cameraMoveBox.y - this.y;
             if(distX < 0){  //check in which octant ball is
                 if(-distX < camera.cameraMoveBox.dx){
                     distX = 0;
@@ -191,27 +202,27 @@ class Ball{
         this.rot += Math.PI / 180 * this.HSpeed * Math.sign(this.Vx);    //angle in degrees
 
         this.HSpeed = Math.hypot(this.Vx, this.Vy); //update HSpeed
-        var circle = {shape: 1, PoX: this.PoX, PoY: this.PoY, Vx: this.Vx, Vy: this.Vy, rad: this.radus, rot: this.rot};
+        var circle = {shape: 1, x: this.x, y: this.y, Vx: this.Vx, Vy: this.Vy, rad: this.radus, rot: this.rot};
         ballsData[0] = circle;  //update info in ballsData
     }
     showPath(){
         ctx.lineWidth = 2;  //line
         ctx.strokeStyle = "red";
         ctx.beginPath();
-        ctx.moveTo(this.PoX, this.PoY);
-        ctx.lineTo(this.PoX + this.Vx, this.PoY + this.Vy);
+        ctx.moveTo(this.x, this.y);
+        ctx.lineTo(this.x + this.Vx, this.y + this.Vy);
         ctx.stroke();
 
         ctx.beginPath();
-        ctx.arc(this.PoX + this.Vx, this.PoY + this.Vy, this.radus, 0 , 2 * Math.PI);
+        ctx.arc(this.x + this.Vx, this.y + this.Vy, this.radus, 0 , 2 * Math.PI);
         ctx.stroke();
 
         ctx.strokeStyle = "orange";
-        let cornerX = this.PoX - this.radus;
-        ctx.translate(this.PoX, this.PoY);
+        let cornerX = this.x - this.radus;
+        ctx.translate(this.x, this.y);
         ctx.rotate(Math.acos(this.Vy / this.HSpeed) * (this.Vx < 0 ? 1:-1));
-        ctx.translate(-this.PoX, -this.PoY);
-        ctx.strokeRect(cornerX, this.PoY, 2 * this.radus * ((cornerX > this.PoX) ? -1:1), this.HSpeed + this.radus);
+        ctx.translate(-this.x, -this.y);
+        ctx.strokeRect(cornerX, this.y, 2 * this.radus * ((cornerX > this.x) ? -1:1), this.HSpeed + this.radus);
         ctx.setTransform(1, 0, 0, 1, -camera.x, -camera.y);
     }
     getData(){
@@ -219,15 +230,15 @@ class Ball{
         let moveBox = new Array;
         for(let i = 0; i < 2; i++){
             for(let j = -1; j < 2; j += 2){
-                let cornerX = this.PoX + i * ((this.HSpeed + this.radus) * movingNormalY) + j * (this.radus * movingNormalX);
-                let cornerY = this.PoY + i * ((this.HSpeed + this.radus) * movingNormalX * -1) + j * (this.radus * movingNormalY);
+                let cornerX = this.x + i * ((this.HSpeed + this.radus) * movingNormalY) + j * (this.radus * movingNormalX);
+                let cornerY = this.y + i * ((this.HSpeed + this.radus) * movingNormalX * -1) + j * (this.radus * movingNormalY);
                 moveBox.push([cornerX, cornerY]);
             }
             if(i == 0){ //switch two of the corners so the array's sorted correctly
                 moveBox.reverse();
             }
         }   
-        let data = {X: this.PoX, Y: this.PoY, VSpeed: this.Vy, XSpeed:this.Vx, HSpeed: this.HSpeed, MoveBox: moveBox};
+        let data = {X: this.x, Y: this.y, VSpeed: this.Vy, XSpeed:this.Vx, HSpeed: this.HSpeed, MoveBox: moveBox};
         return data;
     }
 }
@@ -239,22 +250,22 @@ class Brick{
         this.width = width;
         this.height = height;
         this.id = Date.now();
-        var rectangle = {shape: 2, x: this.Cx, y: this.Cy, dx: this.width, dy: this.height, color: Math.floor(Math.random() * 360), id: this.id};
-        draw(rectangle);
-        brickData.push(rectangle);
-
-        let dragObejct = document.createElement("div");
-        dragObejct.style.width = `${this.width}px`;
-        dragObejct.style.height = `${this.height}px`;
-        dragObejct.style.left = `${this.Cx - camera.x}px`;
-        dragObejct.style.top = `${this.Cy - camera.y}px`;
-        dropbox.appendChild(dragObejct);
-        dragObejct.draggable = "true";
-        dragObejct.className = "dragObject";
-        dragObejct.id = this.id;
-        dragObejct.addEventListener("mousedown", getMouseOffset);
-        dragObejct.addEventListener("dragend", dragElement);
-        dragObjects.push(dragObejct);
+        if(this.width != 0 && this.height != 0){    //ignore if either height or width is 0
+            var rectangle = {shape: 2, x: this.Cx, y: this.Cy, dx: this.width, dy: this.height, color: Math.floor(Math.random() * 360), id: this.id};
+            draw(rectangle);
+            brickData.push(rectangle);
+    
+            let dragObejct = document.createElement("div");
+            dragObejct.style.width = `${this.width}px`;
+            dragObejct.style.height = `${this.height}px`;
+            dragObejct.style.left = `${this.Cx - camera.x}px`;
+            dragObejct.style.top = `${this.Cy - camera.y}px`;
+            dropbox.appendChild(dragObejct);
+            dragObejct.className = "dragObject";
+            dragObejct.id = this.id;
+            dragObejct.addEventListener("mousedown", getMouseOffset);
+            dragObjects.push(dragObejct);
+        }
     }
 }
 
@@ -264,10 +275,25 @@ class Slope{
         this.Sy = Sy;
         this.Ex = Ex;
         this.Ey = Ey;
-        if(!(this.Ex - this.Sx == 0 && this.Ey - this.Sy == 0)){   //ignore if slope's vector is 0 (no slope to draw)
-            var line = {shape: 3, Sx: this.Sx, Sy: this.Sy, Ex: this.Ex, Ey: this.Ey, color: "black"};
+        this.id = Date.now();
+        if(!(this.Ex - this.Sx == 0 && this.Ey - this.Sy == 0)){   //ignore if slope's length is 0
+            var line = {shape: 3, Sx: this.Sx, Sy: this.Sy, Ex: this.Ex, Ey: this.Ey, color: "black", id: this.id};
             draw(line);
             slopeData.push(line);
+
+            let dragObejct = document.createElement("div");
+            dragObejct.style.width = `${Math.hypot((this.Ex - this.Sx), (this.Ey - this.Sy))}px`;
+            dragObejct.style.height = `5px`;
+            dragObejct.style.left = `${this.Sx - camera.x}px`;
+            dragObejct.style.top = `${this.Sy - camera.y}px`;
+            dragObejct.style.rotate = `${Math.atan((this.Ey - this.Sy) / (this.Ex - this.Sx))}rad`
+            dropbox.appendChild(dragObejct);
+            dragObejct.draggable = "true";
+            dragObejct.className = "dragObject";
+            dragObejct.id = this.id;
+            dragObejct.addEventListener("mousedown", getMouseOffset);
+            dragObejct.addEventListener("dragend", dragElement);
+            dragObjects.push(dragObejct);
         }
     }
 }
@@ -277,10 +303,22 @@ class Peg{
         this.x = x;
         this.y = y;
         this.radius = 10;
+        this.id = Date.now();
 
-        let peg = {shape: 4, x: this.x, y: this.y, r: 10};
+        let peg = {shape: 4, x: this.x, y: this.y, r: 10, id: this.id};
         pegData.push(peg);
         draw(peg);
+
+        let dragObejct = document.createElement("div");
+        dragObejct.style.width = `${2 * this.radius}px`;
+        dragObejct.style.height = `${2 * this.radius}px`;
+        dragObejct.style.left = `${this.x - this.radius - camera.x}px`;
+        dragObejct.style.top = `${this.y - this.radius - camera.y}px`;
+        dropbox.appendChild(dragObejct);
+        dragObejct.className = "dragObject roundDragElement";
+        dragObejct.id = this.id;
+        dragObejct.addEventListener("mousedown", getMouseOffset);
+        dragObjects.push(dragObejct);
     }
 }
 
@@ -294,7 +332,7 @@ function draw(data){
 
     switch(data.shape){
         case 1:{
-            let {PoX: x, PoY: y, rad: r, rot: rot} = data; //destructuring object into variables
+            let {x: x, y: y, rad: r, rot: rot} = data; //destructuring object into variables
             ctx.beginPath();
             ctx.arc(x, y, r, 0, 2 * Math.PI); //defines the circle
 

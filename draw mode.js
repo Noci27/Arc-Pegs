@@ -10,7 +10,7 @@ const selectionWheelImages = document.querySelectorAll("#selectionWheel img")
 const selectionWheelGrow = [{scale: 0}, {scale: 1}];    //animation keyframes
 var grown = false;
 const dropbox = document.getElementById("editLayer");
-var dragObjects = new Array;
+var dragObjects = new Array;    //all dragable html elements
 var currentOffsetX = 0; //used for moving objects
 var currentOffsetY = 0;
 var mouseOffsetX = 0;
@@ -66,10 +66,10 @@ function updateSelected(shape){     //used when clicking on radio images
 }
 
 drawLayer.addEventListener("mousedown", startPreview);
-function startPreview(event){
+function startPreview(e){
     if(isActive == true){
-        startX = camera.x + event.offsetX;
-        startY = camera.y + event.offsetY;
+        startX = camera.x + e.offsetX;
+        startY = camera.y + e.offsetY;
         endX = startX;  //so you don't get wrong previews on press
         endY = startY;
         isDrawing = true;   //is currently drawing
@@ -84,13 +84,13 @@ drawLayer.addEventListener("mousedown", () => {
     }
 });
 
-function dragCanvas(event){
-    camera.move(-event.movementX, -event.movementY);
+function dragCanvas(e){
+    camera.move(-e.movementX, -e.movementY);
     for(let dragObject of dragObjects){
         currPosX = JSON.parse(dragObject.style.left.slice(0, -2));
         currPosY = JSON.parse(dragObject.style.top.slice(0, -2));
-        dragObject.style.left = `${currPosX + event.movementX}px`;
-        dragObject.style.top = `${currPosY + event.movementY}px`;
+        dragObject.style.left = `${currPosX + e.movementX}px`;2
+        dragObject.style.top = `${currPosY + e.movementY}px`;
     }
     redrawCanvas();
 }
@@ -114,6 +114,14 @@ drawLayer.addEventListener("mouseup", () => {
                 new Brick(startX, startY, width, height);
             break;
             case 3: //slope
+                if(endX < startX){  //switch points if drawn right to left so drag element works
+                    startX ^= endX;
+                    endX ^= startX;
+                    startX ^= endX;
+                    startY ^= endY;
+                    endY ^= startY;
+                    startY ^= endY;
+                }
                 new Slope(startX, startY, endX, endY);
             break;
             case 4: //peg
@@ -127,32 +135,32 @@ drawLayer.addEventListener("mouseup", () => {
     }
 })
 
-drawLayer.addEventListener("mousemove", (event) => {updateCoords(event);showPreview(event)});
-function showPreview(event){
+drawLayer.addEventListener("mousemove", (e) => {updateCoords(e);showPreview(e)});
+function showPreview(e){
     if(isDrawing == true){
-        endX = camera.x + event.offsetX;
-        endY = camera.y + event.offsetY;
+        endX = camera.x + e.offsetX;
+        endY = camera.y + e.offsetY;
         redrawCanvas();
     }
 }
 
-function updateCoords(event){
+function updateCoords(e){
     let xCoord = document.getElementById("xCoords");
-    xCoord.innerText = "x: " + (camera.x + event.offsetX);
+    xCoord.innerText = "x: " + (camera.x + e.offsetX);
     let yCoord = document.getElementById("yCoords");
-    yCoord.innerText = "y: " + (camera.y + event.offsetY);
+    yCoord.innerText = "y: " + (camera.y + e.offsetY);
 }
 
 document.addEventListener("wheel", updateSelectionWheel, {passive: true});
-function updateSelectionWheel(event){
+function updateSelectionWheel(e){
     if(isActive){
-        selectedShape += Math.sign(event.deltaY);
+        selectedShape += Math.sign(e.deltaY);
         selectedShape = ((selectedShape - 2 + 3) % 3) + 2; // cycles through 2, 3, 4
         selectionWheel.style.backgroundImage = `conic-gradient(from ${300 + (selectedShape - 2) * 120}deg, rgba(255, 255, 255, 0.8) 120deg, transparent 120deg 360deg)`;
         assets[selectedShape - 2].checked = true;
         if(!grown){ //only grow when not already visible
-            selectionWheel.style.left = `calc(${event.x}px - 5rem)`;
-            selectionWheel.style.top = `calc(${event.y}px - 5rem)`;
+            selectionWheel.style.left = `calc(${e.x}px - 5rem)`;
+            selectionWheel.style.top = `calc(${e.y}px - 5rem)`;
             selectionWheel.animate(selectionWheelGrow, {duration: 100, fill: "forwards"});
             grown = true;
         }
@@ -167,31 +175,37 @@ function shrink(){
     }
 }
 
-dropbox.addEventListener("dragover", (e) =>{
-    e.preventDefault();
-})
-
-function getMouseOffset(event){
-    mouseOffsetX = event.offsetX;
-    mouseOffsetY = event.offsetY;
+function getMouseOffset(e){
+    mouseOffsetX = e.offsetX;
+    mouseOffsetY = e.offsetY;
+    e.target.style.cursor = "move";
+    e.target.style.zIndex = 1;
+    e.target.addEventListener("mousemove", dragElement);
+    e.target.addEventListener("mouseup", stopDrag, {once: true});
 }
 
-function dragElement(event){
-    currentOffsetX = JSON.parse(event.target.style.left.slice(0, -2));   //reset variables
-    currentOffsetY = JSON.parse(event.target.style.top.slice(0, -2));
-    let translationX = event.offsetX - mouseOffsetX;
-    let translationY = event.offsetY - mouseOffsetY;
+function dragElement(e){
+    currentOffsetX = e.target.offsetLeft;   //reset variables
+    currentOffsetY = e.target.offsetTop;
+    let translationX = e.offsetX - mouseOffsetX;
+    let translationY = e.offsetY - mouseOffsetY;
     currentOffsetX += translationX;
     currentOffsetY += translationY;
-    event.target.style.left = `${currentOffsetX}px`;
-    event.target.style.top = `${currentOffsetY}px`;
+    e.target.style.left = `${currentOffsetX}px`;
+    e.target.style.top = `${currentOffsetY}px`;
 
-    for(let brick of brickData){    //find and move correct brick
-        if(event.target.id == brick.id){
-            brick.x += translationX;
-            brick.y += translationY;
+    for(let object of brickData.concat(slopeData, pegData, ballsData)){    //find and move correct element
+        if(e.target.id == object.id){
+            object.x += translationX;
+            object.y += translationY;
             break;
         }
     }
     redrawCanvas();
+}
+
+function stopDrag(e){
+    e.target.removeEventListener("mousemove", dragElement);
+    e.target.style.cursor = "pointer";
+    e.target.style.zIndex = 0;
 }
