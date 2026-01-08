@@ -163,6 +163,8 @@ button{
 
 .dragObject{
     position: absolute;
+    min-width: 50px;
+    min-height: 50px;
     transform-origin: top left;
     &:hover{
         background-color: hsla(0, 0%, 20%, 0.5);

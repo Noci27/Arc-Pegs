@@ -86,12 +86,6 @@ drawLayer.addEventListener("mousedown", () => {
 
 function dragCanvas(e){
     camera.move(-e.movementX, -e.movementY);
-    for(let dragObject of dragObjects){
-        currPosX = JSON.parse(dragObject.style.left.slice(0, -2));
-        currPosY = JSON.parse(dragObject.style.top.slice(0, -2));
-        dragObject.style.left = `${currPosX + e.movementX}px`;2
-        dragObject.style.top = `${currPosY + e.movementY}px`;
-    }
     redrawCanvas();
 }
 

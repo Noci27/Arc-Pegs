@@ -100,6 +100,12 @@ class Camera{
         this.y += y;
         this.cameraMoveBox.x += x;
         this.cameraMoveBox.y += y;
+        for(let dragObject of dragObjects){ //move all drag objects
+            let currPosX = JSON.parse(dragObject.style.left.slice(0, -2));
+            let currPosY = JSON.parse(dragObject.style.top.slice(0, -2));
+            dragObject.style.left = `${currPosX - x}px`;
+            dragObject.style.top = `${currPosY - y}px`;
+        }
         this.cameraMoveBox.path = new Path2D();   //update path for debugging
         this.cameraMoveBox.path.rect(this.cameraMoveBox.x, this.cameraMoveBox.y, this.cameraMoveBox.dx, this.cameraMoveBox.dy);
     }
@@ -125,6 +131,7 @@ function initializeCanvas(){
     fldHeight = height;
     fldWidth = width;
     camera = new Camera();
+    // camera.draw();
     d = new Ball(310, 320, 20);
     ballInitial = d.getData();
 }
@@ -187,6 +194,9 @@ function startButton(){
 }
 
 function start(){
+    if(dropbox.style.zIndex == 99){ //exit all other modes
+        toggleEdit();
+    }
     clearInterval(moveIntervalID);  //so it doesn't speed up when pressed again
     moveIntervalID = setInterval(move, tickRate);   //update the canvas
 }
@@ -199,11 +209,6 @@ function pause(){
 function softReset(){
     pause();
     materialChangeStuff.innerHTML = "play_arrow";
-    let ball = ballsData[0];    //reset both ball and ballsdata
-    ball.x = ballInitial.X;
-    ball.y = ballInitial.Y;
-    ball.Vx = ballInitial.XSpeed;
-    ball.Vy = ballInitial.VSpeed;
     d.x = ballInitial.X;
     d.y = ballInitial.Y;
     d.Vx = ballInitial.XSpeed;
@@ -216,22 +221,16 @@ function softReset(){
 function hardReset(){
     pause();
     materialChangeStuff.innerHTML = "play_arrow";
-    let ball = ballsData[0];
-    ball.x = ballInitial.X;
-    ball.y = ballInitial.Y;
-    ball.Vx = ballInitial.XSpeed;
-    ball.Vy = ballInitial.VSpeed;
-    d.x = ballInitial.X;
-    d.y = ballInitial.Y;
-    d.Vx = ballInitial.XSpeed;
-    d.Vy = ballInitial.VSpeed;
-    
     brickData = [];
-    brickCollisionPaths = [];
     slopeData = [];
     pegData = [];
-    ballsData.splice(1, ballsData.length - 1);   //delete every but one ball
+    ballsData = [];
+    for(let obecjt of dragObjects){
+        dropbox.removeChild(obecjt);
+    }
+    dragObjects = [];
 
+    d = new Ball(310, 320, 50);
     camera.reset();
     redrawCanvas();
     window.removeEventListener("beforeunload", warning);    //remove listener for better performance and user experience

@@ -21,15 +21,14 @@ class Ball{
         this.HSpeed = Math.hypot(this.Vx, this.Vy);
         this.rot = 0;
         this.id = Date.now();
-        var circle = {shape: 1, x: this.x, y: this.y, Vx: this.Vx, Vy: this.Vy, rad: this.radus, rot: this.rot, id: this.id};
-        draw(circle);
-        ballsData.push(circle);
+        ballsData.push(this);
+        draw(this);
 
         let dragObejct = document.createElement("div");
         dragObejct.style.width = `${2 * this.radus}px`;
         dragObejct.style.height = `${2 * this.radus}px`;
-        dragObejct.style.left = `${this.x - this.radus - camera.x}px`;
-        dragObejct.style.top = `${this.y - this.radus - camera.y}px`;
+        dragObejct.style.left = `${this.x - (this.radus >= 25 ? this.radus: 25) - camera.x}px`;
+        dragObejct.style.top = `${this.y - (this.radus >= 25 ? this.radus: 25) - camera.y}px`;
         dropbox.appendChild(dragObejct);
         dragObejct.className = "dragObject roundDragElement";
         dragObejct.id = this.id;
@@ -142,9 +141,9 @@ class Ball{
         
         //-----Spaghetti Block Collision Take 4-----
         for(const path of brickData){
-            let brick = [[path.x, path.y],[path.x + path.dx, path.y],[path.x + path.dx, path.y + path.dy],[path.x, path.y + path.dy]];
+            let brick = [[path.x, path.y],[path.x + path.width, path.y],[path.x + path.width, path.y + path.height],[path.x, path.y + path.height]];
             if(checkOverlap(brick, movebox)){
-                let marginBox = [[path.x - this.radus, path.y - this.radus], [path.x + path.dx + this.radus, path.y - this.radus], [path.x + path.dx + this.radus, path.y + path.dy + this.radus], [path.x - this.radus, path.y + path.dy + this.radus]];
+                let marginBox = [[path.x - this.radus, path.y - this.radus], [path.x + path.width + this.radus, path.y - this.radus], [path.x + path.width + this.radus, path.y + path.height + this.radus], [path.x - this.radus, path.y + path.height + this.radus]];
                 let minDist = Number.MAX_SAFE_INTEGER;
                 let minDistID = 4;
                 for(let i = 0; i < 4; i++){ //find side of impact
@@ -156,7 +155,6 @@ class Ball{
                 }
                 this.x += minDist * this.Vx;  //move to point of impact
                 this.y += minDist * this.Vy;
-                console.log(this.Vy)
                 if(Math.abs(this.Vy) < 2 * gravity){  //stick to floor if speed too low
                     this.Vy = 0;
                 }
@@ -202,8 +200,6 @@ class Ball{
         this.rot += Math.PI / 180 * this.HSpeed * Math.sign(this.Vx);    //angle in degrees
 
         this.HSpeed = Math.hypot(this.Vx, this.Vy); //update HSpeed
-        var circle = {shape: 1, x: this.x, y: this.y, Vx: this.Vx, Vy: this.Vy, rad: this.radus, rot: this.rot};
-        ballsData[0] = circle;  //update info in ballsData
     }
     showPath(){
         ctx.lineWidth = 2;  //line
@@ -238,28 +234,30 @@ class Ball{
                 moveBox.reverse();
             }
         }   
-        let data = {X: this.x, Y: this.y, VSpeed: this.Vy, XSpeed:this.Vx, HSpeed: this.HSpeed, MoveBox: moveBox};
-        return data;
+        let element = {X: this.x, Y: this.y, VSpeed: this.Vy, XSpeed:this.Vx, HSpeed: this.HSpeed, MoveBox: moveBox};
+        return element;
     }
 }
 
 class Brick{
     constructor(x, y, width, height){
-        this.Cx = x;
-        this.Cy = y;
+        this.x = x;
+        this.y = y;
         this.width = width;
         this.height = height;
         this.id = Date.now();
+        this.color = Math.floor(Math.random() * 360);
         if(this.width != 0 && this.height != 0){    //ignore if either height or width is 0
-            var rectangle = {shape: 2, x: this.Cx, y: this.Cy, dx: this.width, dy: this.height, color: Math.floor(Math.random() * 360), id: this.id};
-            draw(rectangle);
-            brickData.push(rectangle);
+            brickData.push(this);
+            draw(this);
     
             let dragObejct = document.createElement("div");
-            dragObejct.style.width = `${this.width}px`;
-            dragObejct.style.height = `${this.height}px`;
-            dragObejct.style.left = `${this.Cx - camera.x}px`;
-            dragObejct.style.top = `${this.Cy - camera.y}px`;
+            let intendedWidth = (this.width < 50 ? 50: this.width);
+            dragObejct.style.width = `${intendedWidth}px`;
+            let intendedHeight = (this.height < 50 ? 50: this.height);
+            dragObejct.style.height = `${intendedHeight}px`;
+            dragObejct.style.left = `${this.x - (intendedWidth - this.width)/2 - camera.x}px`;
+            dragObejct.style.top = `${this.y - (intendedHeight - this.height)/2 - camera.y}px`;
             dropbox.appendChild(dragObejct);
             dragObejct.className = "dragObject";
             dragObejct.id = this.id;
@@ -275,11 +273,11 @@ class Slope{
         this.Sy = Sy;
         this.Ex = Ex;
         this.Ey = Ey;
+        this.color = "black";
         this.id = Date.now();
         if(!(this.Ex - this.Sx == 0 && this.Ey - this.Sy == 0)){   //ignore if slope's length is 0
-            var line = {shape: 3, Sx: this.Sx, Sy: this.Sy, Ex: this.Ex, Ey: this.Ey, color: "black", id: this.id};
-            draw(line);
-            slopeData.push(line);
+            slopeData.push(this);
+            draw(this);
 
             let dragObejct = document.createElement("div");
             dragObejct.style.width = `${Math.hypot((this.Ex - this.Sx), (this.Ey - this.Sy))}px`;
@@ -305,15 +303,14 @@ class Peg{
         this.radius = 10;
         this.id = Date.now();
 
-        let peg = {shape: 4, x: this.x, y: this.y, r: 10, id: this.id};
-        pegData.push(peg);
-        draw(peg);
+        pegData.push(this);
+        draw(this);
 
         let dragObejct = document.createElement("div");
         dragObejct.style.width = `${2 * this.radius}px`;
         dragObejct.style.height = `${2 * this.radius}px`;
-        dragObejct.style.left = `${this.x - this.radius - camera.x}px`;
-        dragObejct.style.top = `${this.y - this.radius - camera.y}px`;
+        dragObejct.style.left = `${this.x - (this.radius >= 25 ? this.radius: 25) - camera.x}px`;
+        dragObejct.style.top = `${this.y - (this.radius >= 25 ? this.radius: 25) - camera.y}px`;
         dropbox.appendChild(dragObejct);
         dragObejct.className = "dragObject roundDragElement";
         dragObejct.id = this.id;
@@ -322,17 +319,10 @@ class Peg{
     }
 }
 
-function draw(data){
-    //always have the ID of the shape in the input -> {shape: n, ...}
-    //Shapes:
-    //1 = Circle -> {PosX, PosY, rad}
-    //2 = Rectangle -> {x, y, dx, dy, color}
-    //3 = Line -> {Sx, Sy, Ex, Ey, color}
-    //4 = Peg -> {x, y, r}
-
-    switch(data.shape){
-        case 1:{
-            let {x: x, y: y, rad: r, rot: rot} = data; //destructuring object into variables
+function draw(element){
+    switch(element.constructor.name){
+        case "Ball":{
+            let {x: x, y: y, radus: r, rot: rot} = element; //destructuring object into variables
             ctx.beginPath();
             ctx.arc(x, y, r, 0, 2 * Math.PI); //defines the circle
 
@@ -348,8 +338,8 @@ function draw(data){
             break;
         }
 
-        case 2:{
-            let {x: x, y: y, dx: width, dy: height, color: color} = data;
+        case "Brick":{
+            let {x: x, y: y, width: width, height: height, color: color} = element;
             let grad = ctx.createLinearGradient(x, y, x + width, y); 
             grad.addColorStop(0.1, "white");
             grad.addColorStop(1, `hsl(${color}, 87%, 50%)`); //random hue 
@@ -363,11 +353,11 @@ function draw(data){
             break;
         }
 
-        case 3:{
-            let {Sx: Sx, Sy: Sy, Ex: Ex, Ey: Ey, color: colour} = data;
+        case "Slope":{
+            let {Sx: Sx, Sy: Sy, Ex: Ex, Ey: Ey, color: color} = element;
             ctx.lineWidth = 5;
-            ctx.strokeStyle = colour;
-            ctx.fillStyle = colour;
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color;
             ctx.beginPath();
             ctx.moveTo(Sx, Sy);
             ctx.lineTo(Ex, Ey);
@@ -380,8 +370,8 @@ function draw(data){
             break;
         }
 
-        case 4:{
-            let {x: x, y: y, r: r} = data;
+        case "Peg":{
+            let {x: x, y: y, radius: r} = element;
             ctx.beginPath();
             ctx.arc(x, y, r, 0, 2 * Math.PI);
             let grad = ctx.createRadialGradient(x, y, 1, x, y, r);
