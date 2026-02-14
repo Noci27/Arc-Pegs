@@ -129,7 +129,7 @@ drawLayer.addEventListener("mouseup", () => {
     }
 })
 
-drawLayer.addEventListener("mousemove", (e) => {updateCoords(e);showPreview(e)});
+drawLayer.addEventListener("mousemove", showPreview);
 function showPreview(e){
     if(isDrawing == true){
         endX = camera.x + e.offsetX;
@@ -138,6 +138,7 @@ function showPreview(e){
     }
 }
 
+container.addEventListener("mousemove", updateCoords);
 function updateCoords(e){
     let xCoord = document.getElementById("xCoords");
     xCoord.innerText = "x: " + (camera.x + e.offsetX);
@@ -170,36 +171,63 @@ function shrink(){
 }
 
 function getMouseOffset(e){
-    mouseOffsetX = e.offsetX;
-    mouseOffsetY = e.offsetY;
-    e.target.style.cursor = "move";
-    e.target.style.zIndex = 1;
-    e.target.addEventListener("mousemove", dragElement);
-    e.target.addEventListener("mouseup", stopDrag, {once: true});
+    let currentDragObeject = e.target;  //object that matters
+    container.style.cursor = "move";
+    currentDragObeject.style.zIndex = 1;
+    document.addEventListener("mousemove", dragElement);
+    document.addEventListener("mouseup", stopDrag, {once: true});
+
+    function stopDrag(){    //this function now has acces to variables in above function, <3 js
+        document.removeEventListener("mousemove", dragElement);
+        container.style.cursor = "pointer";
+        currentDragObeject.style.zIndex = 0;
+    }
+
+    function dragElement(e){
+        currentOffsetX = currentDragObeject.offsetLeft;   //reset variables
+        currentOffsetY = currentDragObeject.offsetTop;    //the current position of the elemen
+        currentOffsetX += e.movementX;
+        currentOffsetY += e.movementY;
+        currentDragObeject.style.left = `${currentOffsetX}px`;
+        currentDragObeject.style.top = `${currentOffsetY}px`;
+    
+        for(let object of brickData.concat(pegData, ballsData)){    //find and move correct element
+            if(currentDragObeject.id == object.id){
+                object.x += e.movementX;
+                object.y += e.movementY;
+                break;
+            }
+        }
+        for(let slope of slopeData){
+            if(currentDragObeject.id == slope.id){
+                slope.Sx += e.movementX;
+                slope.Sy += e.movementY;
+                slope.Ex += e.movementX;
+                slope.Ey += e.movementY;
+                break;
+            }
+        }
+        redrawCanvas();
+    }
 }
 
-function dragElement(e){
-    currentOffsetX = e.target.offsetLeft;   //reset variables
-    currentOffsetY = e.target.offsetTop;
-    let translationX = e.offsetX - mouseOffsetX;
-    let translationY = e.offsetY - mouseOffsetY;
-    currentOffsetX += translationX;
-    currentOffsetY += translationY;
-    e.target.style.left = `${currentOffsetX}px`;
-    e.target.style.top = `${currentOffsetY}px`;
 
-    for(let object of brickData.concat(slopeData, pegData, ballsData)){    //find and move correct element
+function dim(e){
+    for(let object of brickData.concat(slopeData, pegData, ballsData)){    //find and recolour correct element
         if(e.target.id == object.id){
-            object.x += translationX;
-            object.y += translationY;
+            object.colorBrightness = 35;
             break;
         }
     }
     redrawCanvas();
 }
 
-function stopDrag(e){
-    e.target.removeEventListener("mousemove", dragElement);
-    e.target.style.cursor = "pointer";
-    e.target.style.zIndex = 0;
+function unDim(e){
+    for(let object of brickData.concat(slopeData, pegData, ballsData)){    //find and recolour correct element
+        if(e.target.id == object.id){
+            object.colorBrightness = 50;
+            break;
+        }
+    }
+    redrawCanvas();
 }

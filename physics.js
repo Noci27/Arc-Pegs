@@ -1,3 +1,4 @@
+const container = document.getElementById("canvas-container");
 const field = document.getElementById("gameplayLayer");     //gameplay layer
 const ctx = field.getContext("2d"); //gives tools for drawing
 const drawLayer = document.getElementById("drawLayer");   //for UI and stuff
@@ -247,6 +248,7 @@ class Brick{
         this.height = height;
         this.id = Date.now();
         this.color = Math.floor(Math.random() * 360);
+        this.colorBrightness = 50;  //change this during a hover
         if(this.width != 0 && this.height != 0){    //ignore if either height or width is 0
             brickData.push(this);
             draw(this);
@@ -262,6 +264,8 @@ class Brick{
             dragObejct.className = "dragObject";
             dragObejct.id = this.id;
             dragObejct.addEventListener("mousedown", getMouseOffset);
+            dragObejct.addEventListener("mouseover", dim);
+            dragObejct.addEventListener("mouseleave", unDim);
             dragObjects.push(dragObejct);
         }
     }
@@ -279,18 +283,18 @@ class Slope{
             slopeData.push(this);
             draw(this);
 
+            let [normalX, normalY] = normal((this.Ex - this.Sx), (this.Ey - this.Sy));
+            normalX *= 25;  //scale vector to half of min-height
+            normalY *= 25;
             let dragObejct = document.createElement("div");
             dragObejct.style.width = `${Math.hypot((this.Ex - this.Sx), (this.Ey - this.Sy))}px`;
-            dragObejct.style.height = `5px`;
-            dragObejct.style.left = `${this.Sx - camera.x}px`;
-            dragObejct.style.top = `${this.Sy - camera.y}px`;
+            dragObejct.style.left = `${this.Sx - normalX - camera.x}px`;
+            dragObejct.style.top = `${this.Sy - normalY - camera.y}px`;
             dragObejct.style.rotate = `${Math.atan((this.Ey - this.Sy) / (this.Ex - this.Sx))}rad`
             dropbox.appendChild(dragObejct);
-            dragObejct.draggable = "true";
             dragObejct.className = "dragObject";
             dragObejct.id = this.id;
             dragObejct.addEventListener("mousedown", getMouseOffset);
-            dragObejct.addEventListener("dragend", dragElement);
             dragObjects.push(dragObejct);
         }
     }
@@ -302,6 +306,7 @@ class Peg{
         this.y = y;
         this.radius = 10;
         this.id = Date.now();
+        this.color = 14;        //hsl value
 
         pegData.push(this);
         draw(this);
@@ -339,14 +344,14 @@ function draw(element){
         }
 
         case "Brick":{
-            let {x: x, y: y, width: width, height: height, color: color} = element;
+            let {x: x, y: y, width: width, height: height, color: color, colorBrightness: brightness} = element;
             let grad = ctx.createLinearGradient(x, y, x + width, y); 
             grad.addColorStop(0.1, "white");
-            grad.addColorStop(1, `hsl(${color}, 87%, 50%)`); //random hue 
+            grad.addColorStop(1, `hsl(${color}, 87%, ${brightness}%)`); //random hue 
             ctx.fillStyle = grad;   //makes the gradient
             ctx.fillRect(x, y, width, height);
 
-            ctx.strokeStyle = `hsl(${color}, 87%, 40%)`;
+            ctx.strokeStyle = `hsl(${color}, 87%, ${brightness - 10}%)`;
             ctx.lineWidth = Math.log1p(height); //adjust edge width
             ctx.lineJoin = "round"; //rounded corners
             ctx.strokeRect(x, y, width, height);
@@ -375,9 +380,9 @@ function draw(element){
             ctx.beginPath();
             ctx.arc(x, y, r, 0, 2 * Math.PI);
             let grad = ctx.createRadialGradient(x, y, 1, x, y, r);
-            grad.addColorStop(0, "rgb(245, 90, 41)");
-            grad.addColorStop(0.8, "rgb(245, 0, 0)");
-            grad.addColorStop(0.9, "rgb(198, 0, 0)");
+            grad.addColorStop(0, "hsl(14, 91%, 56%)");
+            grad.addColorStop(0.8, "hsl(14, 100%, 48%)");
+            grad.addColorStop(0.9, "hsl(14, 100%, 39%)");
             ctx.fillStyle = grad;
             ctx.fill();
             break;
