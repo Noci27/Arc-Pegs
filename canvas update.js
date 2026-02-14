@@ -209,10 +209,8 @@ function pause(){
 function softReset(){
     pause();
     materialChangeStuff.innerHTML = "play_arrow";
-    d.x = ballInitial.X;
-    d.y = ballInitial.Y;
-    d.Vx = ballInitial.XSpeed;
-    d.Vy = ballInitial.VSpeed;
+    ballsData = [];
+    d = new Ball(310, 320, 20);
 
     camera.reset();
     redrawCanvas();
@@ -230,7 +228,7 @@ function hardReset(){
     }
     dragObjects = [];
 
-    d = new Ball(310, 320, 50);
+    d = new Ball(310, 320, 20);
     camera.reset();
     redrawCanvas();
     window.removeEventListener("beforeunload", warning);    //remove listener for better performance and user experience
