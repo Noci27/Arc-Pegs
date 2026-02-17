@@ -170,7 +170,7 @@ function shrink(){
     }
 }
 
-function getMouseOffset(e){
+function getMouseOffset(e){     //function responsible for draging objects in edit mode
     let currentDragObeject = e.target;  //object that matters
     container.style.cursor = "move";
     currentDragObeject.style.zIndex = 1;
@@ -178,6 +178,10 @@ function getMouseOffset(e){
     document.addEventListener("mouseup", stopDrag, {once: true});
 
     function stopDrag(){    //this function now has acces to variables in above function, <3 js
+        for(let ball of ballsData){ //update starting positions of all balls to new location
+            ball.startX = ball.x;
+            ball.startY = ball.y;
+        }
         document.removeEventListener("mousemove", dragElement);
         container.style.cursor = "pointer";
         currentDragObeject.style.zIndex = 0;
@@ -210,7 +214,6 @@ function getMouseOffset(e){
         redrawCanvas();
     }
 }
-
 
 function dim(e){
     for(let object of brickData.concat(slopeData, pegData, ballsData)){    //find and recolour correct element

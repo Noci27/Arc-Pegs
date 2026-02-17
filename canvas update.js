@@ -160,7 +160,15 @@ function redrawCanvas(){
             break;
 
             case 3:
-                draw({shape: 3, Sx: startX, Sy: startY, Ex: endX, Ey: endY});
+                ctx.beginPath();
+                ctx.moveTo(startX, startY);
+                ctx.lineTo(endX, endY);
+                ctx.stroke();
+
+                ctx.arc(startX, startY, 2.5, 0, 2 * Math.PI);   //rounded edges
+                ctx.fill();
+                ctx.arc(endX, endY, 2.5, 0, 2 * Math.PI);
+                ctx.fill();
             break;
 
             case 4:
@@ -209,8 +217,9 @@ function pause(){
 function softReset(){
     pause();
     materialChangeStuff.innerHTML = "play_arrow";
-    ballsData = [];
-    d = new Ball(310, 320, 20);
+    for(let ball of ballsData){ //reset all balls to initial state
+        ball.reset();
+    }
 
     camera.reset();
     redrawCanvas();

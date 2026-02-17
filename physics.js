@@ -16,6 +16,8 @@ class Ball{
     constructor(x, y, radius){
         this.x = x;
         this.y = y;
+        this.startX = x;    //initial position used for resseting
+        this.startY = y;
         this.radus = radius;
         this.Vx = 0;
         this.Vy = 0;
@@ -202,6 +204,13 @@ class Ball{
 
         this.HSpeed = Math.hypot(this.Vx, this.Vy); //update HSpeed
     }
+    reset(){    //reset to initial state
+        this.x = this.startX;
+        this.y = this.startY;
+        this.Vx = 0;
+        this.Vy = 0;
+        this.rot = 0;
+    }
     showPath(){
         ctx.lineWidth = 2;  //line
         ctx.strokeStyle = "red";
@@ -235,7 +244,7 @@ class Ball{
                 moveBox.reverse();
             }
         }   
-        let element = {X: this.x, Y: this.y, VSpeed: this.Vy, XSpeed:this.Vx, HSpeed: this.HSpeed, MoveBox: moveBox};
+        let element = {X: this.x, Y: this.y, Radius: this.radus, StartX: this.startX, StartY: this.startY, VSpeed: this.Vy, XSpeed:this.Vx, HSpeed: this.HSpeed, MoveBox: moveBox};
         return element;
     }
 }
