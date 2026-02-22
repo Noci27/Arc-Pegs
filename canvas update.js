@@ -1,5 +1,4 @@
-var tickRate = 50/3; //50/3 = 60fps
-// var globTimer = 0;
+var tickRate = 500/3; //50/3 = 60fps
 var camera = null;
 var d = null;
 var ballInitial = null;
@@ -133,7 +132,7 @@ function initializeCanvas(){
     camera = new Camera();
     // camera.draw();
     d = new Ball(310, 320, 20);
-    ballInitial = d.getData();
+    // ballInitial = d.getData();
 }
 initializeCanvas();
 
@@ -182,10 +181,13 @@ function redrawCanvas(){
 }
 
 function move(){
-    // globTimer++;
-    d.update();
+    for(let ball of ballsData){
+        ball.update();
+    }
     redrawCanvas();
-    // d.showPath();
+    for(let ball of ballsData){
+        ball.showPath();
+    }
     // console.log(d.getData());
 }
 
@@ -251,12 +253,73 @@ function getBoard(){
 
 function putBoard(board){
     if(board){
-        ballsData = board.balls;
-        brickData = board.bricks;
-        slopeData = board.slopes;
-        pegData = board.pegs;
+        for(let object in board){
+            switch(object){
+                case "balls":{
+                    for(let ball of board[object]){
+                        new Ball(ball.x, ball.y, ball.radus);
+                    }
+                    break;
+                }
+                case "bricks":{
+                    for(let brick of board[object]){
+                        new Brick(brick.x, brick.y, brick.width, brick.height);
+                    }
+                    break;
+                }
+                case "slopes":{
+                    for(let slope of board[object]){
+                        new Slope(slope.Sx, slope.Sy, slope.Ex, slope.Ey);
+                    }
+                    break;
+                }
+                case "pegs":{
+                    for(let peg of board[object]){
+                        new Peg(peg.x, peg.y, peg.r);
+                    }
+                    break;
+                }
+            }
+        }
         redrawCanvas();
     }
 }
 
-putBoard();
+putBoard({
+	"bricks": [],
+	"slopes": [
+		{
+			"Sx": 97,
+			"Sy": 439,
+			"Ex": 469,
+			"Ey": 591,
+			"color": "black",
+			"id": 1771765572466
+		},
+		{
+			"Sx": 470,
+			"Sy": 591,
+			"Ex": 608,
+			"Ey": 647,
+			"color": "black",
+			"id": 1771765586533
+		},
+		{
+			"Sx": 614,
+			"Sy": 669,
+			"Ex": 1202,
+			"Ey": 487,
+			"color": "black",
+			"id": 1771765608522
+		},
+		{
+			"Sx": 608,
+			"Sy": 649,
+			"Ex": 615,
+			"Ey": 675,
+			"color": "black",
+			"id": 1771765610456
+		}
+	],
+	"pegs": []
+});

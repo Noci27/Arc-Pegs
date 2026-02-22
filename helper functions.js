@@ -23,19 +23,18 @@ function unit(Vx, Vy){  //returns the unit vector of a given vector
     }
 }
 
-//returns an object if both lines intersect each other, false otherwise
-//just read the last few lines I can't explain it short enough for there to not be any word wrap
+//returns an object of scalars such that in a standard vector definition of a line, the scalars reach the intersection of the two lines
 //syntax: line = [[x, y], [x, y]]
 function areCrossing(line1, line2){
     let aa = line1[1][0] - line1[0][0];
     if(aa == 0){
-        aa = 0.001;
+        aa = 0.0000001; //can't be too small or else rounding errors start appearing
     }
     let ab = line2[0][0] - line2[1][0];
     let ba = line1[1][1] - line1[0][1];
     let bb = line2[0][1] - line2[1][1];
     if(bb == 0){
-        bb = 0.001;
+        bb = 0.000001;
     }
     let r = line2[0][0] - line1[0][0];
     let s = line2[0][1] - line1[0][1];
@@ -47,12 +46,7 @@ function areCrossing(line1, line2){
     s /= bb;
     r -= ab * s;
 
-    if(s >= 0 && s <= 1 && r >= 0 && r <= 1){
-        return {line1: r, line2: s};
-    }
-    else{
-        return false;
-    }
+    return {line1: r, line2: s};
 }
 
 //-----Miscellaneous helper functions-----
@@ -220,7 +214,8 @@ function contains(point, container){
             }
         }
         else{
-            if(areCrossing([[point.x, point.y],[Number.MAX_SAFE_INTEGER, point.y]], [container[i],container[(i+1)%numOfVertices]])){
+            let result = areCrossing([[point.x, point.y],[Number.MAX_SAFE_INTEGER, point.y]], [container[i],container[(i+1)%numOfVertices]]);
+            if(result.line1 >= 0 && result.line1 <= 1 && result.line2 >= 0 && result.line2 <= 1){
                 intersections++;
             }
         }

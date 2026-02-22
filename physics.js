@@ -71,69 +71,16 @@ class Ball{
 
         //-----Slope Collision-----
         if(unmovedDist != 0){
-            let slopeDataLength = slopeData.length;
-            for(let i = 0; i < slopeDataLength; i++){
-                let {Sx: sx, Sy: sy, Ex: ex, Ey: ey} = slopeData[i];
-                let slopage = [[sx, sy], [ex, ey]];
-                if(checkOverlapCircle([nPoX, nPoY, this.radus], slopage)){
-                    let [normalX, normalY] = normal((ex-sx), (ey-sy));
+            for(let slope of slopeData){
+                if(checkOverlap(movebox, [[slope.Sx, slope.Sy], [slope.Ex, slope.Ey]])){
+                    // let [unitX, unitY] = unit(this.Vx, this.Vy);
+                    let [normalX, normalY] = normal((slope.Ex-slope.Sx), (slope.Ey-slope.Sy));
                     let scalar = 2 * friction * dotP(this.Vx, this.Vy, normalX, normalY);  //mirror moving vector + dampening
-                    //using Gauss elimination to find point of impact
-                    let aa = this.Vx * unmovedDist;
-                    let ab = -(ex-sx);
-                    if(ab == 0){    //prevent division by 0
-                        ab = 0.01;
-                    }
-                    let ba = this.Vy * unmovedDist;
-                    if(ba == 0){
-                        ba = 0.01;
-                    }
-                    let bb = -(ey-sy);
-                    let t = sx - (this.x + this.radus * Math.sign(scalar) * normalX); //adding radius of ball
-                    let r = sy - (this.y + this.radus * Math.sign(scalar) * normalY);
-    
-                    aa /= ab;
-                    t /= ab;
-                    ba -= bb * aa;
-                    r -= bb * t;
-                    r /= ba;
-
-                    if(r < -0.5){  //happens when hitting edges
-                        let dist1 = Math.hypot((this.x - sx), (this.y - sy));
-                        let dist2 = Math.hypot((this.x - ex), (this.y - ey));
-                        let [unnormalX, unnormalY] = normal(normalX, normalY);  //bounces off other side
-                        scalar = 2 * friction * dotP(this.Vx, this.Vy, unnormalX, unnormalY);
-                        aa = normalX;
-                        ab = -this.Vx;
-                        if(ab == 0){    //prevent division by 0
-                            ab = 0.01;
-                        }
-                        ba = normalY;
-                        if(ba == 0){
-                            ba = 0.01;
-                        }                    
-                        bb = -this.Vy;
-                        t = this.x - ((dist1 < dist2 ? sx: ex) - this.radus * unnormalX * Math.sign(scalar));
-                        r = this.y - ((dist1 < dist2 ? sy: ey) - this.radus * unnormalY * Math.sign(scalar));
-
-                        aa /= ab;
-                        t /= ab;
-                        ba -= bb * aa;
-                        r -= bb * t;
-                        r /= ba;
-
-                        this.x = (dist1 < dist2 ? sx: ex) - this.radus * unnormalX * Math.sign(scalar) + r * normalX; //move back onto initial path
-                        this.y = (dist1 < dist2 ? sy: ey) - this.radus * unnormalY * Math.sign(scalar) + r * normalY;
-                        unmovedDist = 0;
-                        this.Vx -= scalar * unnormalX;    //translate vector correct way
-                        this.Vy -= scalar * unnormalY;    
-                        break;                    
-                    }
-    
-                    this.x += r * this.Vx * unmovedDist;    //go to point of impact
-                    this.y += r * this.Vy * unmovedDist;
-                    unmovedDist -= Math.hypot(r * this.Vx * unmovedDist, r * this.Vy * unmovedDist) / this.HSpeed;    //fraction of moved distance
-    
+                    let result = areCrossing([[this.x + this.radus * Math.sign(scalar) * normalX, this.y + this.radus * Math.sign(scalar) * normalY], [nPoX +this.radus * Math.sign(scalar) * normalX, nPoY + this.radus * Math.sign(scalar) * normalY]], [[slope.Sx, slope.Sy], [slope.Ex, slope.Ey]]);   //offset line by radius of ball
+                    console.log(result.line1)
+                    this.x += result.line1 * this.Vx * unmovedDist;    //go to point of impact
+                    this.y += result.line1 * this.Vy * unmovedDist;
+                    unmovedDist -= Math.hypot(result.line1 * this.Vx * unmovedDist, result.line1 * this.Vy * unmovedDist) / this.HSpeed;    //fraction of moved distance
                     this.Vx -= scalar * normalX;    //translate vector correct way
                     this.Vy -= scalar * normalY;
                     nPoX += this.Vx * unmovedDist;
@@ -150,7 +97,7 @@ class Ball{
                 let minDist = Number.MAX_SAFE_INTEGER;
                 let minDistID = 4;
                 for(let i = 0; i < 4; i++){ //find side of impact
-                    let dist = areCrossing([[this.x, this.y],[this.x+this.Vx, this.y+this.Vy]],[marginBox[i], marginBox[(i+1)%4]]).line1;
+                    let dist = areCrossing([[this.x, this.y],[nPoX, nPoY]],[marginBox[i], marginBox[(i+1)%4]]).line1;
                     if(dist >= 0 && dist < minDist){
                         minDist = dist;
                         minDistID = i;
