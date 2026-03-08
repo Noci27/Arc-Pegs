@@ -114,7 +114,7 @@ class Camera{
     draw(){     //show camera boundaries
         ctx.lineWidth = 1;
         ctx.moveTo(this.cameraMoveBox.x, this.cameraMoveBox.y);
-        ctx.strokeStyle = "rgb(29, 128, 102)"
+        ctx.strokeStyle = "rgb(29, 128, 102)";
         ctx.stroke(this.cameraMoveBox.path);
     }
 }
@@ -275,7 +275,7 @@ function putBoard(board){
                 }
                 case "pegs":{
                     for(let peg of board[object]){
-                        new Peg(peg.x, peg.y, peg.r);
+                        new Peg(peg.x, peg.y, peg.r, peg.id);
                     }
                     break;
                 }
@@ -285,41 +285,4 @@ function putBoard(board){
     }
 }
 
-putBoard({
-	"bricks": [],
-	"slopes": [
-		{
-			"Sx": 97,
-			"Sy": 439,
-			"Ex": 469,
-			"Ey": 591,
-			"color": "black",
-			"id": 1771765572466
-		},
-		{
-			"Sx": 470,
-			"Sy": 591,
-			"Ex": 608,
-			"Ey": 647,
-			"color": "black",
-			"id": 1771765586533
-		},
-		{
-			"Sx": 614,
-			"Sy": 669,
-			"Ex": 1202,
-			"Ey": 487,
-			"color": "black",
-			"id": 1771765608522
-		},
-		{
-			"Sx": 608,
-			"Sy": 649,
-			"Ex": 615,
-			"Ey": 675,
-			"color": "black",
-			"id": 1771765610456
-		}
-	],
-	"pegs": []
-});
+putBoard();

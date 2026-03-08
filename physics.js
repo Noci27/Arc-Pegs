@@ -21,7 +21,7 @@ class Ball{
         this.radus = radius;
         this.Vx = 0;
         this.Vy = 0;
-        this.HSpeed = Math.hypot(this.Vx, this.Vy);
+        this.HSpeed = 0;
         this.rot = 0;
         this.id = Date.now();
         ballsData.push(this);
@@ -45,16 +45,18 @@ class Ball{
         let movebox = this.getData().MoveBox;   //bounding box of movement
 
         //-----Peg Collision-----
-        for(let peg of pegData){
-            if(checkOverlapCircle([peg.x, peg.y, peg.r], movebox)){
+        for(let i = 0; i < pegData.length; i++){
+            let peg = pegData[i];
+            if(checkOverlapCircle([peg.x, peg.y, peg.radius], movebox) || peg.radius + this.radus > Math.hypot((peg.x - nPoX), (peg.y - nPoY))){
                 let [unitX, unitY] = unit(this.Vx, this.Vy);
                 let [normalX, normalY] = normal(this.Vx, this.Vy);
                 let distToMovement = dotP(normalX, normalY, this.x - peg.x, this.y - peg.y);    //it's always the distance between the two center points projected onto the normal vector
                 normalX *= distToMovement;  //scale normal vector to reach the movement line
                 normalY *= distToMovement; 
-                let distToCollision = Math.sqrt(Math.pow(this.radus + peg.r, 2) - Math.pow(distToMovement, 2));
+                let distToCollision = Math.sqrt(Math.pow(this.radus + peg.radius, 2) - Math.pow(distToMovement, 2));
                 let translationX = normalX - distToCollision * unitX;
                 let translationY = normalY - distToCollision * unitY;
+                let movedDist = Math.hypot((peg.x + translationX - this.x), (peg.y + translationY - this.y)) / this.HSpeed;
                 this.x = peg.x + translationX;
                 this.y = peg.y + translationY;
 
@@ -62,29 +64,34 @@ class Ball{
                 let scalar = 2 * friction * dotP(this.Vx, this.Vy, mirrorX, mirrorY);
                 this.Vx -= scalar * mirrorX;
                 this.Vy -= scalar * mirrorY;
-                unmovedDist = 0;
-                nPoX = this.x;
-                nPoY = this.y;
-                break;  //so only one collision happens per tick
+                unmovedDist -= movedDist;
+                nPoX = this.x + unmovedDist * this.Vx;
+                nPoY = this.y + unmovedDist * this.Vy;
+                i = -1; //go through all pegs again
             }
         }
 
         //-----Slope Collision-----
         if(unmovedDist != 0){
-            for(let slope of slopeData){
+            for(let i = 0; i < slopeData.length; i++){
+                let slope = slopeData[i];
                 if(checkOverlap(movebox, [[slope.Sx, slope.Sy], [slope.Ex, slope.Ey]])){
-                    // let [unitX, unitY] = unit(this.Vx, this.Vy);
                     let [normalX, normalY] = normal((slope.Ex-slope.Sx), (slope.Ey-slope.Sy));
                     let scalar = 2 * friction * dotP(this.Vx, this.Vy, normalX, normalY);  //mirror moving vector + dampening
-                    let result = areCrossing([[this.x + this.radus * Math.sign(scalar) * normalX, this.y + this.radus * Math.sign(scalar) * normalY], [nPoX +this.radus * Math.sign(scalar) * normalX, nPoY + this.radus * Math.sign(scalar) * normalY]], [[slope.Sx, slope.Sy], [slope.Ex, slope.Ey]]);   //offset line by radius of ball
-                    console.log(result.line1)
-                    this.x += result.line1 * this.Vx * unmovedDist;    //go to point of impact
-                    this.y += result.line1 * this.Vy * unmovedDist;
-                    unmovedDist -= Math.hypot(result.line1 * this.Vx * unmovedDist, result.line1 * this.Vy * unmovedDist) / this.HSpeed;    //fraction of moved distance
-                    this.Vx -= scalar * normalX;    //translate vector correct way
-                    this.Vy -= scalar * normalY;
-                    nPoX += this.Vx * unmovedDist;
-                    nPoY += this.Vy * unmovedDist; 
+                    let result = areCrossing([[this.x + this.radus * Math.sign(scalar) * normalX, this.y + this.radus * Math.sign(scalar) * normalY], [nPoX +this.radus * Math.sign(scalar) * normalX, nPoY + this.radus * Math.sign(scalar) * normalY]], [[slope.Sx, slope.Sy], [slope.Ex, slope.Ey]]).line1;   //offset line by radius of ball
+                    console.log(result)
+                    if(result <= 1 && result >= 0){    //check if collision is valid (initial check wasn't corner of movebox)
+                        this.x += result * this.Vx * unmovedDist;    //go to point of impact
+                        this.y += result * this.Vy * unmovedDist;
+                        unmovedDist -= Math.hypot(result * this.Vx * unmovedDist, result * this.Vy * unmovedDist) / this.HSpeed;    //fraction of moved distance
+                        this.Vx -= scalar * normalX;    //translate vector correct way
+                        this.Vy -= scalar * normalY;
+                        nPoX = this.x + unmovedDist * this.Vx;  //update next intended location
+                        nPoY = this.y + unmovedDist * this.Vy;
+                        this.HSpeed = Math.hypot(this.Vx, this.Vy); //update HSpeed (needed for next line)
+                        movebox = this.getData().MoveBox;   //update movebox
+                        i = -1;  //recalcualte all slopes again
+                    }
                 }
             }
         }
@@ -175,7 +182,7 @@ class Ball{
         ctx.translate(this.x, this.y);
         ctx.rotate(Math.acos(this.Vy / this.HSpeed) * (this.Vx < 0 ? 1:-1));
         ctx.translate(-this.x, -this.y);
-        ctx.strokeRect(cornerX, this.y, 2 * this.radus * ((cornerX > this.x) ? -1:1), this.HSpeed + this.radus);
+        ctx.strokeRect(cornerX, this.y, 2 * this.radus * ((cornerX > this.x) ? -1:1), this.HSpeed);
         ctx.setTransform(1, 0, 0, 1, -camera.x, -camera.y);
     }
     getData(){
@@ -183,8 +190,8 @@ class Ball{
         let moveBox = new Array;
         for(let i = 0; i < 2; i++){
             for(let j = -1; j < 2; j += 2){
-                let cornerX = this.x + i * ((this.HSpeed + this.radus) * movingNormalY) + j * (this.radus * movingNormalX);
-                let cornerY = this.y + i * ((this.HSpeed + this.radus) * movingNormalX * -1) + j * (this.radus * movingNormalY);
+                let cornerX = this.x + i * (this.HSpeed * movingNormalY) + j * (this.radus * movingNormalX);
+                let cornerY = this.y + i * (this.HSpeed * movingNormalX * -1) + j * (this.radus * movingNormalY);
                 moveBox.push([cornerX, cornerY]);
             }
             if(i == 0){ //switch two of the corners so the array's sorted correctly
@@ -257,11 +264,11 @@ class Slope{
 }
 
 class Peg{
-    constructor(x, y, r){
+    constructor(x, y, r, id){
         this.x = x;
         this.y = y;
-        this.radius = 10;
-        this.id = Date.now();
+        this.radius = typeof(r) === "number"? r : 10;
+        this.id = typeof(id) === "number" ? id : Date.now();
         this.color = 14;        //hsl value
 
         pegData.push(this);
