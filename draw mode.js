@@ -16,7 +16,7 @@ var currentOffsetY = 0;
 var mouseOffsetX = 0;
 var mouseOffsetY = 0;
 
-function toggleDraw(){
+function toggleDraw(){  //change this to a state machine PLEASE
     if(dropbox.style.zIndex == 99){ //exit all other modes
         toggleEdit();
     }

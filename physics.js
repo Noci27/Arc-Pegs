@@ -64,9 +64,11 @@ class Ball{
                 let scalar = 2 * friction * dotP(this.Vx, this.Vy, mirrorX, mirrorY);
                 this.Vx -= scalar * mirrorX;
                 this.Vy -= scalar * mirrorY;
+
                 unmovedDist -= movedDist;
                 nPoX = this.x + unmovedDist * this.Vx;
                 nPoY = this.y + unmovedDist * this.Vy;
+                movebox = this.getData().MoveBox;   //update movebox
                 i = -1; //go through all pegs again
             }
         }
@@ -99,7 +101,7 @@ class Ball{
         //-----Spaghetti Block Collision Take 4-----
         for(const path of brickData){
             let brick = [[path.x, path.y],[path.x + path.width, path.y],[path.x + path.width, path.y + path.height],[path.x, path.y + path.height]];
-            if(checkOverlap(brick, movebox)){
+            if(checkOverlap(brick, movebox) || checkOverlapCircle([nPoX, nPoY, this.radus], brick)){
                 let marginBox = [[path.x - this.radus, path.y - this.radus], [path.x + path.width + this.radus, path.y - this.radus], [path.x + path.width + this.radus, path.y + path.height + this.radus], [path.x - this.radus, path.y + path.height + this.radus]];
                 let minDist = Number.MAX_SAFE_INTEGER;
                 let minDistID = 4;
